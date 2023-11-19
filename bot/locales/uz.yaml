@@ -1,0 +1,160 @@
+---
+greeting: Salom
+enterPhoneNumber: "Telefon raqamingizni kiriting:"
+notRegisteredMsg: Botdan foydalanish uchun avval /start tugmasini bosibg ro'yxatdan o'ting
+promotionBtn: Aksiya
+aboutCompanyBtn: Kompaniya haqida ma'lumot
+productsBtn: Mahsulot turlari
+settingsBtn: Sozlamalar
+complainBtn: Shikoyat qoldirish
+contactsBtn: Kontaktlar
+validateClientBtn: Shaxsni tasdiqlash
+choosePromotion: Ushbu tugmalardan birini tanlang
+firstPromotionBtn: Aksiya 25 yil
+secondPromotionBtn: Eng yaxshi ish aksiyasi
+scoresBtn: Ballar
+backToMainMenuBtn: Asosiy menyuga qaytish
+participateBtn: Ishtirok etish
+firstPrInfo: Aksiya haqida ma'lumot
+backToPrMenuBtn: Aksiyalar bo'lmiga qaytish
+chooseRegionInfo: "Quyidagi regionlardan birini tanlang:"
+adminPanelBtn: Administrator paneli
+notAdminText: Siz administrator emassiz
+errorText: Qandaydir xatolik yuz berdi
+dataSavedMsg: Ma'lumotlar muvaffaqiyatli yaratildi/tahrirlandi
+Admin:
+  regionsBtn: Regionlar
+  dealersBtn: Dillerlar
+  ordersBtn: Buyurtmalar
+  productsBtn: Mahsulotlar
+  queriesBtn: So'rovlar
+  operatorsBtn: Operatorlar
+  companyInfoBtn: Kompaniya haqida matn
+  contactInfoBtn: Kontaktlar haqida matn
+  scoreInfoBtn: Ball tizimi haqida matn
+  backToAdminPanel: Adminga qaytish
+  deleteBtn: Oʻchirib yuborish
+  editBtn: O'zgartirish
+  archiveBtn: Yashirish
+  unarchiveBtn: Arxidan chiqarish
+  yesBtn: "Ha"
+  noBtn: "Yo'q"
+AdminRegionForm:
+  panelTxt: Hududlarni boshqarish uchun boshqaruv paneli
+  addRegionsBtn: Hudud qo'shish
+  manageRegionsBtn: Mavjud hududlarni boshqarish
+  enterRegionNameUzText: "Mintaqa nomini kiriting (O'zbek tilida):"
+  enterRegionNameRuText: "Mintaqa nomini kiriting (Rus tilida):"
+  regionSavedText: Hudud muvaffaqiyatli saqlandi
+  chooseRegionTxt: "Quyidagi hududlardan birini tanlang"
+  regionUpdateCaption: "Nomi: ${regionName}\n\nYaratilgan sana: ${regionDate}"
+  regionIsArchivedMsg: "Region arxivga solindi"
+  regionIsUnArchivedMsg: "Region arxivdan chiqarildi"
+  editConfirmationMsg: "Ism (o'zbekcha): ${regionNameUz}\nNomi (ruscha): ${regionNameRu}\n\nMa'lumotlar to'g'rimi kiritilganmi"
+  editingCanceledMsg: "Tahrirlash bekor qilindi"
+AdminDealerForm:
+  panelTxt: Dillerlarni boshqarish uchun administrator paneli
+  addDealerBtn: Dillerni qo'shish
+  manageDealersBtn: Dillerlar boshqaruvi
+  enterDealerUzName: "Diller nomini o'zbek tilida kiriting:"
+  enterDealerRuName: "Diller nomini rus tilida kiriting:"
+  chooseDealerRegion: "Diller tegishli bo'lgan hududni tanlang:"
+  confirmationMessage: "Diler nomi (o'zbekcha): ${name_uz}\nDiler nomi (ruscha): ${name_ru}\n\nBu ma'lumotlarni tasdiqlaysizmi?"
+  dealerUpdateCaption: "Nomi: ${dealerName}\n\n"
+  chooseDealerTxt: "Quyidagilardan dilerlardan birini tanlang"
+  regionSavedText: Diller muvaffaqiyatli saqlandi
+AdminProductForm:
+  panelTxt: Mahsulotlarni boshqarish uchun administrator paneli
+  addProductBtn: Mahsulot qo'shish
+  manageProductsBtn: Mahsulotlarni boshqarish
+  enterUzProductNameMsg: "Mahsulot nomini oʻzbek tilida kiriting"
+  enterRuProductNameMsg: "Mahsulot nomini rus tilida kiriting"
+  enterRuProductCaptionMsg: "Mahsulot tavsifini rus tilida kiriting"
+  enterUzProductCaptionMsg: "Mahsulot tavsifini oʻzbek tilida kiriting"
+  sendProductPhotoMsg: "Mahsulot rasmini yuboring"
+  confirmationMessage: "Mahsulot nomi (oʻzbekcha): ${name_uz}\nMahsulot nomi (ruscha): ${name_ru}\n\nUshbu maʼlumotni tasdiqlaysizmi?"
+  productUpdateMsg: "Mahsulot nomi: ${productName}\nTavsif: ${desc}"
+  productIsArchivedMsg: "Mahsulotlar arxivlandi"
+  productIsUnArchivedMsg: "Mahsulot arxivdan chiqarildi"
+AdminOrderForm:
+  panelTxt: Buyurtmalar uchun boshqaruv paneli
+  recentUnValidatedOrdersBtn: Tasdiqlanmagan buyurtmalar
+  orderUpdateMsg: "ID: ${id}\n Summa: ${amount}\nTasdiqlangan: ${confirmed}"
+  confirmBtn: Tasdiqlash
+AdminClientForm:
+  panelTxt: Shaxsni tasdiqlash uchun so'rovnomalar boshqaruv paneli
+  recentUnValidatedClientsBtn: Tasdiqlanmagan so'rovnomalar
+  queryCaption: "№ ${id} Shaxsni tasdiqlash\n\nJoylashuv: ${location}\nXodimlar soni: ${numberOfEmployees}"
+AdminOperatorForm:
+  addOperatorBtn: Operator qo'shish
+  manageOperatorBtn: Operatorlarni boshqarish
+  sendOperatorContactMsg: Operator kontakt raqamini jo'nating
+  operatorAddedSuccessfully: Оператор успешно добавлен
+  chooseOneOperatorMsg: Quyidagi operatorlardan birini tanlang
+  operatorInfoMsg: "Operator nomi: ${name}\nOperator telefon raqami: ${phoneNumber}\nDiler: ${dealerName}"
+  changeDealerBtn: Dilerni almashtirish
+Client:
+  emptyDataMsg: Ma'lumotlar mavjud emas
+  chooseDealerTxt: "Quyidagi dillerlardan birini tanlang:"
+  chooseProductTxt: "Quyidagi mahsulotlardan birini tanlang:"
+  enterAmountTxt: "Buyurtma miqdorini kiriting:"
+  operatorNotificationTxt: Yangi kiruvchi buyurtma bor, tekshiring va tasdiqlang
+  sendPhoneNumberMsg: Telefon raqamni yuborish
+  sendValidPhoneNumberMsg: "To'g'ri telefon raqamni yuboring:"
+  otpCodeisSentMsg: Tasdiqlash kodi ${phoneNumber} telefon raqamiga yuborildi
+  otpCodeMsg: "Tasdiqlash kodingiz:"
+  wrongCodeMsg: Noto'g'ri kod jo'natdingiz!
+  wrongTypeCodeMsg:
+    Tasdiqlash kodi 4 raqamdan iborat bo'lishi kerak, qaytadan urinib
+    ko'ring
+  tooManyAttemptsMsg: Juda koʻp urinishlar, keyinroq qayta urinib koʻring
+  cancelRegistrationMsg: Ro'yxatdan o'tish bekor qilindi
+  cancelRegistrationBtn: Bekor qilish
+  registerSuccessMsg: Muvaffaqiyatli ro'yxatdan o'tdingiz
+  orderIsConfirmedMsg: Buyurtmangiz operatorlar tomonidan tasdiqlandi hamda sizga bonus tarzida ${newScore} ball berildi.\n\n Umumiy yiqqan ballingiz ${score}
+  wrongAmountMsg: "To'g'ri buyurtma miqdorini kiriting:"
+  sendVideoMsg: "Video yuboring (maksimal hajmi: 50mb)"
+  backOneStepMsg: "Ortga"
+  cancelApplicationBtn: "Bekor qilish"
+  successfullyCancelledMsg: "Muvaffaqiyatli bekor qilindi"
+  applicationCanceledMsg: "Ariza bekor qilindi"
+  waitForOperatorsMsg: Operatorlar tomonidan tasdiqlanishini kuting
+  maxVideoSizeLimitMsg: "Kechirasiz, video hajmi chegaradan oshib ketdi. Maksimal hajmi: 50 MB"
+  sentVideoSizeMsg: "Siz yuborgan video hajmi:"
+  totalScoreMsg: "Siz to'plagan umumiy ball: ${score}"
+  sendLocationMsg: "Joylashuvni yuboring:"
+  sendLocationBtn: "📍Joylashuvni jo'natish"
+  sendValidLocationMsg: "Noto'g'ri manzil yuborildi, boshqatdan urinib ko'ring"
+  sendInsideVideoMsg: "Ustaxona ichkarisidan video yuboring"
+  sendOutsideVideoMsg: "Ustaxona tashqarisidan video yuboring"
+  askForEmployeesNumberMsg: "Ustaxonada nechta ishchi ishlaydi?"
+  finalRespondMsgForValidation: "Rahmat, tez orada ma'lumotlarni ko'rib chiqamiz"
+  noClientsWithThese: "Siz kiritigan ID lar bo'yicha ma'lumotlar mavjud emas"
+  validtationFinishedMsg: "Muvaffaqiyatli yangilandi"
+  settingsInitialCaption: "Muloqot tili: ${lang}\nTelefon: +${number}\nUmumiy ball: ${score}\n\nQuyidagilardan birini tanlang:"
+  phoneNumberSettingsCaption: "Muloqot tili: ${lang}\nTelefon: +${number}\nUmumiy ball: ${score}\n\nTelefon raqamingizni yuboring:"
+  MainMenuBtn: "Asosiy Menu"
+  langOfBot: "Muloqot tili"
+  userPhoneNumberBtn: "Telefon raqam"
+  userPhoneUpdatedSuccessMsg: "Telefon raqamingizni muvaffaqiyatli yangilandi"
+Operator:
+  operatorConfirmedMsg: Buyurtma muvafaqqiyatli tasdiqlandi
+sendRuCompanyTextMsg: "Kompaniya matnini rus tilida yuboring"
+sendUzCompanyTextMsg: "Kompaniya matnini o'zbek tilida yuboring"
+sendRuContactTextMsg: "Kontakt matnini rus tilida yuboring"
+sendUzContactTextMsg: "Kontakt matnini oʻzbek tilida yuboring"
+Complain:
+  complainMsg: "Qanday shikoyatlaringiz mavjud?"
+  sendVideoBtn: Video jo'natish
+  sendVideoMsg: "Shikoyatingiz haqida video yuboring"
+  writeComplainBtn: Shikoyat yozish
+  writeComplainMsg: "Shikoyatingiz haqida yozing"
+  complainIsSentMsg: "Rahmat, shikoyatingizni tez orada ko‘rib chiqamiz"
+Score:
+  infoAboutScorebtn: "Ball tizimi haqida"
+  purchaseHistoryBtn: "Xaridlar tarixi"
+  scoresMenu: Ballar menyusi
+  myscoreBtn: Mening ballarim
+  sendRuScoreTextMsg: Rus tilida ball tizimi haqida ma'lumot yuboring
+  sendUzScoreTextMsg: O'zbek tilida ball tizimi haqida ma'lumot yuboring
+purchaseHistoryMsg: "Buyurtma miqdori: ${amount}\nDiler: ${dealerName}\nStatus: {status}\nSanasi: ${date}\n__ __ __ __ __ __ __ __"

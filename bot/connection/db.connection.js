@@ -9,6 +9,7 @@ const db = new Sequelize(
     host: process.env.POSTGRES_HOST,
     port: Number(process.env.POSTGRES_PORT),
     dialect: process.env.POSTGRES_DIALECT,
+    logging: false,
   }
 );
 

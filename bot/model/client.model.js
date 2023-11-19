@@ -1,7 +1,9 @@
 const { DataTypes } = require("sequelize");
 const db = require("../connection/db.connection");
+const Order = require("./order.model");
+const User = require("./user.model");
 
-module.exports = db.define(
+const Client = db.define(
   "client",
   {
     id: {
@@ -23,8 +25,18 @@ module.exports = db.define(
       defaultValue: false,
       allowNull: true,
     },
+    status: {
+      type: DataTypes.STRING,
+      defaultValue: "PENDING",
+      allowNull: false,
+    },
   },
   {
-    timestamps: false,
+    timestamps: true,
   }
 );
+
+// Client.hasMany(Order);
+Client.belongsTo(User);
+
+module.exports = Client;

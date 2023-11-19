@@ -8,6 +8,9 @@ const i18n = new TelegrafI18n({
   sessionName: "session",
   useSession: true,
   allowMissing: false,
+  templateData: {
+    pluralize: TelegrafI18n.pluralize,
+  },
 });
 
 module.exports = i18n;

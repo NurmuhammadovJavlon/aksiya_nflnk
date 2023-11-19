@@ -1,7 +1,8 @@
 const { DataTypes } = require("sequelize");
 const db = require("../connection/db.connection");
+const Operator = require("./operator.model");
 
-module.exports = db.define(
+const User = db.define(
   "user",
   {
     id: {
@@ -29,25 +30,38 @@ module.exports = db.define(
     admin: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
-      allowNull: true,
     },
     superAdmin: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
-      allowNull: true,
     },
-    isConfirmed: {
+    isOperator: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
-      allowNull: true,
     },
     preferedLanguageCode: {
       type: DataTypes.STRING,
       defaultValue: "en",
+      allowNull: true,
+    },
+    phoneNumber: {
+      type: DataTypes.STRING,
+      defaultValue: "",
+      allowNull: true,
+    },
+    score: {
+      type: DataTypes.FLOAT,
       allowNull: false,
+      defaultValue: 0,
     },
   },
   {
-    timestamps: false,
+    timestamps: true,
   }
 );
+
+// User.hasOne(Client);
+// User.hasOne(Client);
+User.hasOne(Operator);
+Operator.belongsTo(User);
+module.exports = User;
