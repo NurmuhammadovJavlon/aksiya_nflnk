@@ -5,6 +5,7 @@ const cloudinary = require("../../../connection/cloudinary.connection");
 const uploadVideo = require("../../../functions/cloudinary/video.upload");
 const {
   GetAllAdminUsers,
+  getUser,
 } = require("../../../common/sequelize/user.sequelize");
 
 const initScene = new Composer();
@@ -51,15 +52,25 @@ sendVideo.on("video", async (ctx) => {
       ctx.reply(ctx.i18n.t("Client.maxVideoSizeLimitMsg"));
     } else {
       const fileSizeInMegabytes = video.file_size / (1024 * 1024);
-      ctx.reply(
+      await ctx.reply(
         `${ctx.i18n.t("Client.sentVideoSizeMsg")} ${fileSizeInMegabytes.toFixed(
           2
         )} MB`
       );
+      await ctx.reply(ctx.i18n.t("Client.finalRespondMsgForValidation"));
       // Handle the video as needed
-      console.log(video);
-      // Get a direct link to the video file
-      const { href } = await ctx.telegram.getFileLink(fileId);
+      const user = await getUser(String(ctx.chat.id));
+      const today = new Intl.DateTimeFormat(ctx.i18n.locale(), {
+        minute: "2-digit",
+        hour: "2-digit",
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }).format(new Date());
+      const caption = ctx.i18n.t("Client.bestWorkCaption", {
+        phoneNumber: user.phoneNumber,
+        date: today,
+      });
       // const uplodedVideoUrl = await uploadVideo(href, fileId);
       const admins = await GetAllAdminUsers();
       const processedAdmins = new Set();
@@ -67,7 +78,13 @@ sendVideo.on("video", async (ctx) => {
       for (const admin of admins) {
         if (!processedAdmins.has(admin.chatID)) {
           try {
-            await ctx.telegram.sendVideo(parseInt(admin.chatID), video.file_id);
+            await ctx.telegram.sendVideo(
+              parseInt(admin.chatID),
+              video.file_id,
+              {
+                caption,
+              }
+            );
             processedAdmins.add(admin.chatID);
             // console.log(`Message sent to ${operator.name}`);
           } catch (error) {

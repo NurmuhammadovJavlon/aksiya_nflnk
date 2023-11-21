@@ -17,7 +17,7 @@ startStep.hears(match("AdminRegionForm.manageRegionsBtn"), async (ctx) => {
     ctx.wizard.state.regionData = {};
     ctx.wizard.state.regionData.region = {};
     ctx.wizard.state.regionData.region.regionPage = 1;
-    ctx.wizard.state.regionData.region.itemsPerPage = 2;
+    ctx.wizard.state.regionData.region.itemsPerPage = 8;
 
     const regions = await getRegionsWithPagination(
       ctx.wizard.state.regionData.region.regionPage,
@@ -88,7 +88,7 @@ startStep.action("cancel", async (ctx) => {
     console.log(error);
   }
 });
-startStep.on("callback_query", async (ctx) => {
+startStep.action(/i_(\d+)/, async (ctx) => {
   try {
     if (!ctx.update.callback_query?.data.includes("i_")) {
       return ctx.reply("invalid_callback_query");
@@ -181,8 +181,9 @@ manageStep.action("delete", async (ctx) => {
     );
 
     if (regions.totalItems === 0) {
-      await ctx.answerCbQuery(ctx.i18n.t("Client.emptyDataMsg"));
-      return;
+      await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+      await ctx.reply(ctx.i18n.t("Client.emptyDataMsg"));
+      return ctx.scene.leave();
     }
 
     const keyboard = generateItemsKeyboard(
@@ -193,7 +194,7 @@ manageStep.action("delete", async (ctx) => {
       regions.items,
       ctx.i18n
     );
-    // await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+
     await ctx.editMessageText(
       ctx.i18n.t("AdminRegionForm.chooseRegionTxt"),
       keyboard

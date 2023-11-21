@@ -16,7 +16,7 @@ startStep.hears(match("AdminDealerForm.addDealerBtn"), async (ctx) => {
     ctx.wizard.state.dealerForm.keyboard = Markup.keyboard([
       // [Markup.button.text(ctx.i18n.t("Client.backOneStepMsg"))],
       [Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn"))],
-    ]);
+    ]).resize();
     await ctx.reply(
       ctx.i18n.t("AdminDealerForm.enterDealerUzName"),
       ctx.wizard.state.dealerForm.keyboard
@@ -62,7 +62,7 @@ getRuDealerName.on("message", async (ctx) => {
     ctx.wizard.state.dealerForm.name_ru = ctx.update.message.text;
     ctx.wizard.state.dealerForm.region = {};
     ctx.wizard.state.dealerForm.region.regionPage = 1;
-    ctx.wizard.state.dealerForm.region.itemsPerPage = 2;
+    ctx.wizard.state.dealerForm.region.itemsPerPage = 6;
 
     const regions = await getRegionsWithPagination(
       ctx.wizard.state.dealerForm.region.regionPage,
@@ -70,8 +70,9 @@ getRuDealerName.on("message", async (ctx) => {
     );
 
     if (regions.totalItems === 0) {
+      await ctx.deleteMessage(ctx.update.message.message_id);
       await ctx.reply(ctx.i18n.t("Client.emptyDataMsg"));
-      return;
+      return ctx.scene.leave();
     }
 
     const keyboard = generateItemsKeyboard(
@@ -82,29 +83,9 @@ getRuDealerName.on("message", async (ctx) => {
       regions.items,
       ctx.i18n
     );
-    // await ctx.deleteMessage(ctx.update.message.message_id);
+
     await ctx.reply(ctx.i18n.t("AdminRegionForm.chooseRegionTxt"), keyboard);
     return ctx.wizard.next();
-    // const confirmationMsg = {
-    //   text: ctx.i18n.t("AdminDealerForm.confirmationMessage", {
-    //     name_uz: ctx.wizard.state.dealerForm.name_uz,
-    //     name_ru: ctx.wizard.state.dealerForm.name_ru,
-    //   }),
-    //   buttons: Markup.inlineKeyboard([
-    //     [
-    //       Markup.button.callback(ctx.i18n.t("Admin.yesBtn"), "yes"),
-    //       Markup.button.callback(ctx.i18n.t("Admin.noBtn"), "no"),
-    //     ],
-    //   ]),
-    // };
-    // await ctx.reply(confirmationMsg.text, confirmationMsg.buttons);
-    // await CreateRegion(
-    //   ctx.wizard.state.regionData.name_uz,
-    //   ctx.wizard.state.regionData.name_ru
-    // );
-    // ctx.wizard.state.regionData = {};
-    // ctx.reply(ctx.i18n.t("AdminRegionForm.regionSavedText"));
-    // return ctx.scene.leave();
   } catch (e) {
     console.log(e);
   }

@@ -6,6 +6,8 @@ const {
   ArchiveProduct,
   DeleteProduct,
   CreateProduct,
+  UpdateProduct,
+  GetDealersByProduct,
 } = require("../../../../common/sequelize/product.sequelize");
 const generateItemsKeyboard = require("../../../../functions/keyboards/admins/slider.keyboard");
 const generateProductAdminKeys = require("../../../../functions/keyboards/admins/product.keyboard");
@@ -52,16 +54,54 @@ const sendDealerKeys = async (ctx) => {
       return;
     }
 
-    const keyboard = generateItemsKeyboard(
-      ctx.wizard.state.product.form.dealer.dealerPage,
-      ctx.i18n.locale(),
-      dealers.totalItems,
-      ctx.wizard.state.product.form.dealer.itemsPerPage,
-      dealers.items,
-      ctx.i18n
+    const endPage = Math.ceil(
+      dealers.totalItems / ctx.wizard.state.product.form.dealer.itemsPerPage
     );
-    // await ctx.deleteMessage(ctx.update.message.message_id);
-    await ctx.reply(ctx.i18n.t("AdminDealerForm.chooseDealerTxt"), keyboard);
+    const keyboards = [
+      ...dealers.items?.map((item) => {
+        const name =
+          ctx.i18n.locale() === "uz"
+            ? item.name_uz
+            : ctx.i18n.locale() === "ru"
+            ? item.name_ru
+            : null;
+        const finalName = ctx.wizard.state.product.form.dealer.ids.includes(
+          item.id
+        )
+          ? `${name} – ✅`
+          : name;
+        return [Markup.button.callback(finalName, `i_${item.id}`)];
+      }),
+    ];
+
+    // Add pagination buttons
+    const paginationButtons = [];
+    if (ctx.wizard.state.product.form.dealer.dealerPage > 1) {
+      paginationButtons.push(Markup.button.callback("⬅️", `prev`));
+    }
+    if (ctx.wizard.state.product.form.dealer.dealerPage < endPage) {
+      paginationButtons.push(Markup.button.callback("➡️", `next`));
+    }
+
+    if (paginationButtons.length > 0) {
+      keyboards.push(paginationButtons);
+    }
+
+    keyboards.push([
+      Markup.button.callback(
+        ctx.i18n.t("Client.cancelApplicationBtn"),
+        `cancel`
+      ),
+      Markup.button.callback(
+        ctx.i18n.t("AdminProductForm.finishSelectionBtn"),
+        `finish`
+      ),
+    ]);
+
+    await ctx.reply(
+      ctx.i18n.t("AdminDealerForm.chooseDealerTxt"),
+      Markup.inlineKeyboard(keyboards)
+    );
   } catch (error) {
     console.log(error);
   }
@@ -76,12 +116,28 @@ const GoBack = async (ctx) => {
   }
 };
 
+const generateDealersText = async (id, lang) => {
+  try {
+    const dealers = await GetDealersByProduct(id);
+    let msg = lang === "uz" ? "Dillerlar:\n" : "Дилеры:\n";
+
+    dealers.forEach((dealer) => {
+      const dealerName = lang === "uz" ? dealer.name_uz : dealer.name_ru;
+      msg += `${dealerName}\n`;
+    });
+
+    return msg;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 const startStep = new Composer();
 startStep.hears(match("AdminProductForm.manageProductsBtn"), async (ctx) => {
   try {
     ctx.wizard.state.product = {};
     ctx.wizard.state.product.regionPage = 1;
-    ctx.wizard.state.product.itemsPerPage = 2;
+    ctx.wizard.state.product.itemsPerPage = 6;
     await sendProductKeys(ctx);
   } catch (e) {
     console.log(e);
@@ -127,11 +183,13 @@ startStep.on("callback_query", async (ctx) => {
     const productName =
       ctx.i18n.locale() === "uz" ? product.name_uz : product.name_ru;
     const productCaption =
-      ctx.i18n.locale() === "uz" ? product.caption_uz : caption_ru;
+      ctx.i18n.locale() === "uz" ? product.caption_uz : product.caption_ru;
     const productPhoto = product.image;
+    const dealerMsg = await generateDealersText(productId);
     const product_caption = ctx.i18n.t("AdminProductForm.productUpdateMsg", {
       productName,
       desc: productCaption,
+      dealerMsg,
     });
     const isArchived = product.isArchived;
 
@@ -206,8 +264,7 @@ manageStep.action(["archive", "unarchive"], async (ctx) => {
     const productName =
       ctx.i18n.locale() === "uz" ? product.name_uz : product.name_ru;
     const productCaption =
-      ctx.i18n.locale() === "uz" ? product.caption_uz : caption_ru;
-    const productPhoto = product.image;
+      ctx.i18n.locale() === "uz" ? product.caption_uz : product.caption_ru;
     const product_caption = ctx.i18n.t("AdminProductForm.productUpdateMsg", {
       productName,
       desc: productCaption,
@@ -233,12 +290,6 @@ manageStep.action(["archive", "unarchive"], async (ctx) => {
         inline_keyboard: ctx.wizard.state.product.keyboard,
       },
     });
-    // await ctx.replyWithPhoto(productPhoto, {
-    //   caption: product_caption,
-    //   reply_markup: {
-    //     inline_keyboard: ctx.wizard.state.product.keyboard,
-    //   },
-    // });
     return;
   } catch (error) {
     console.log(error);
@@ -251,7 +302,7 @@ manageStep.action("edit", async (ctx) => {
       // [Markup.button.text(ctx.i18n.t("Client.backOneStepMsg"))],
       [Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn"))],
     ]);
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+    // await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await ctx.reply(
       ctx.i18n.t("AdminProductForm.enterUzProductNameMsg"),
       ctx.wizard.state.product.form.keyboard
@@ -334,6 +385,8 @@ getRuCaption.on("message", async (ctx) => {
     ctx.wizard.state.product.form.dealer = {};
     ctx.wizard.state.product.form.dealer.dealerPage = 1;
     ctx.wizard.state.product.form.dealer.itemsPerPage = 2;
+    ctx.wizard.state.product.form.dealer.ids = [];
+
     await sendDealerKeys(ctx);
     return ctx.wizard.next();
   } catch (error) {
@@ -369,28 +422,14 @@ connectDealerStep.action(["prev", "next"], async (ctx) => {
         ctx.wizard.state.product.form.dealer.dealerPage++;
         break;
     }
-    const dealers = await GetDealersWithPagination(
-      ctx.wizard.state.product.form.dealer.dealerPage,
-      ctx.wizard.state.product.form.dealer.itemsPerPage
-    );
-    const keyboard = generateItemsKeyboard(
-      ctx.wizard.state.product.form.dealer.dealerPage,
-      ctx.i18n.locale(),
-      dealers.totalItems,
-      ctx.wizard.state.product.form.dealer.dealerPage,
-      dealers.items,
-      ctx.i18n
-    );
-    await ctx.editMessageText(
-      ctx.i18n.t("AdminDealerForm.chooseDealerTxt"),
-      keyboard
-    );
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+    await sendDealerKeys(ctx);
     return;
   } catch (error) {
     console.log(error);
   }
 });
-connectDealerStep.on("callback_query", async (ctx) => {
+connectDealerStep.action(/i_(\d+)/, async (ctx) => {
   try {
     if (!ctx.update.callback_query?.data.includes("i_")) {
       return ctx.reply("invalid_callback_query");
@@ -399,9 +438,39 @@ connectDealerStep.on("callback_query", async (ctx) => {
       ctx.update.callback_query?.data.match(/i_(\d+)/)[1],
       10
     );
-    ctx.wizard.state.product.form.dealerId = dealerId;
+    if (!ctx.wizard.state.product.form.dealer.ids.includes(dealerId)) {
+      ctx.wizard.state.product.form.dealer.ids = [
+        ...ctx.wizard.state.product.form.dealer.ids,
+        dealerId,
+      ];
+    } else if (ctx.wizard.state.product.form.dealer.ids.includes(dealerId)) {
+      ctx.wizard.state.product.form.dealer.ids = [
+        ...ctx.wizard.state.product.form.dealer.ids.filter(
+          (id) => id !== dealerId
+        ),
+      ];
+    }
     await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-    await ctx.reply(ctx.i18n.t("AdminProductForm.sendProductPhotoMsg"));
+    await sendDealerKeys(ctx);
+    return;
+    // return ctx.wizard.next();
+  } catch (error) {
+    console.log(error);
+  }
+});
+connectDealerStep.action("finish", async (ctx) => {
+  try {
+    const keyboard = Markup.keyboard([
+      [
+        Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn")),
+        Markup.button.text(ctx.i18n.t("skipBtn")),
+      ],
+    ]);
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+    await ctx.reply(
+      ctx.i18n.t("AdminProductForm.sendProductPhotoMsg"),
+      keyboard
+    );
     return ctx.wizard.next();
   } catch (error) {
     console.log(error);
@@ -413,6 +482,30 @@ getProductPhotoStep.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
   try {
     await GoBack(ctx);
     return ctx.scene.leave();
+  } catch (error) {
+    console.log(error);
+  }
+});
+getProductPhotoStep.hears(match("skipBtn"), async (ctx) => {
+  try {
+    const product = await GetProductById(ctx.wizard.state.product.id);
+    ctx.wizard.state.product.form.photo = product?.image;
+    ctx.wizard.state.product.form.photoPublic_id = product?.image_publicId;
+    const confirmationMsg = {
+      text: ctx.i18n.t("AdminProductForm.confirmationMessage", {
+        name_uz: ctx.wizard.state.product.form.name_ru,
+        name_ru: ctx.wizard.state.product.form.name_ru,
+      }),
+      buttons: Markup.inlineKeyboard([
+        [
+          Markup.button.callback(ctx.i18n.t("Admin.yesBtn"), "yes"),
+          Markup.button.callback(ctx.i18n.t("Admin.noBtn"), "no"),
+        ],
+      ]),
+    };
+    // await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+    await ctx.reply(confirmationMsg.text, confirmationMsg.buttons);
+    return ctx.wizard.next();
   } catch (error) {
     console.log(error);
   }
@@ -458,14 +551,15 @@ confirmDetailStep.action(["yes", "no"], async (ctx) => {
     const callBackData = ctx.update.callback_query.data;
     const MainMenu = await generateProductAdminKeys(ctx);
     if (callBackData === "yes") {
-      const product = await CreateProduct(
+      const product = await UpdateProduct(
+        ctx.wizard.state.product.id,
         ctx.wizard.state.product.form.name_ru,
         ctx.wizard.state.product.form.name_ru,
         ctx.wizard.state.product.form.photo,
         ctx.wizard.state.product.form.photoPublic_id,
-        ctx.wizard.state.product.form.dealerId,
         ctx.wizard.state.product.form.caption_uz,
-        ctx.wizard.state.product.form.caption_ru
+        ctx.wizard.state.product.form.caption_ru,
+        ctx.wizard.state.product.form.dealer.ids
       );
       await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
       if (product) {

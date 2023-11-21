@@ -4,6 +4,7 @@ const { Markup } = require("telegraf");
 // const generatePromotionButtons = require("../../functions/keyboards/promotion.keyboards");
 
 module.exports = bot.hears(match("secondPromotionBtn"), async (ctx) => {
+  ctx.session.prType = 2;
   const promotionMenu = {
     text: ctx.i18n.t("firstPrInfo"),
     buttons: Markup.keyboard([
@@ -14,5 +15,4 @@ module.exports = bot.hears(match("secondPromotionBtn"), async (ctx) => {
   };
   await ctx.reply(promotionMenu.text, promotionMenu.buttons);
   await ctx.scene.enter("BestWorkPromotionWizard");
-  //   console.log(ctx.session);
 });

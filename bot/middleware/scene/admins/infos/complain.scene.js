@@ -35,7 +35,6 @@ startStep.hears(match("complainBtn"), async (ctx) => {
     console.log(e);
   }
 });
-
 startStep.action("cancel", async (ctx) => {
   try {
     await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
@@ -45,7 +44,6 @@ startStep.action("cancel", async (ctx) => {
     console.log(error);
   }
 });
-
 startStep.action("sendVideo", async (ctx) => {
   try {
     const keyboard = Markup.inlineKeyboard([
@@ -187,6 +185,8 @@ getComplainStep.on("message", async (ctx) => {
       // Introduce a delay (e.g., 3 seconds) before sending to the next admin
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
+
+    return ctx.scene.leave();
   } catch (error) {
     console.log(error);
   }

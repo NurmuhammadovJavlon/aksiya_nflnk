@@ -22,13 +22,16 @@ adminPanelBtn: Administrator paneli
 notAdminText: Siz administrator emassiz
 errorText: Qandaydir xatolik yuz berdi
 dataSavedMsg: Ma'lumotlar muvaffaqiyatli yaratildi/tahrirlandi
+skipBtn: Oʻtkazib yuborish
 Admin:
   regionsBtn: Regionlar
   dealersBtn: Dillerlar
   ordersBtn: Buyurtmalar
+  clientsBtn: Shaxslar
   productsBtn: Mahsulotlar
   queriesBtn: So'rovlar
   operatorsBtn: Operatorlar
+  checkClientsBtn: Shaxsni tasdiqlash (admin)
   companyInfoBtn: Kompaniya haqida matn
   contactInfoBtn: Kontaktlar haqida matn
   scoreInfoBtn: Ball tizimi haqida matn
@@ -73,9 +76,10 @@ AdminProductForm:
   enterUzProductCaptionMsg: "Mahsulot tavsifini oʻzbek tilida kiriting"
   sendProductPhotoMsg: "Mahsulot rasmini yuboring"
   confirmationMessage: "Mahsulot nomi (oʻzbekcha): ${name_uz}\nMahsulot nomi (ruscha): ${name_ru}\n\nUshbu maʼlumotni tasdiqlaysizmi?"
-  productUpdateMsg: "Mahsulot nomi: ${productName}\nTavsif: ${desc}"
+  productUpdateMsg: "Mahsulot nomi: ${productName}\nTavsif: ${desc}\n\n${dealerMsg}"
   productIsArchivedMsg: "Mahsulotlar arxivlandi"
   productIsUnArchivedMsg: "Mahsulot arxivdan chiqarildi"
+  finishSelectionBtn: "Tayyor"
 AdminOrderForm:
   panelTxt: Buyurtmalar uchun boshqaruv paneli
   recentUnValidatedOrdersBtn: Tasdiqlanmagan buyurtmalar
@@ -129,14 +133,16 @@ Client:
   sendOutsideVideoMsg: "Ustaxona tashqarisidan video yuboring"
   askForEmployeesNumberMsg: "Ustaxonada nechta ishchi ishlaydi?"
   finalRespondMsgForValidation: "Rahmat, tez orada ma'lumotlarni ko'rib chiqamiz"
-  noClientsWithThese: "Siz kiritigan ID lar bo'yicha ma'lumotlar mavjud emas"
+  noClientsWithThese: "Siz kiritigan ID lar bo'yicha ma'lumotlar mavjud emas yoki allaqachon tasdiqlangan"
   validtationFinishedMsg: "Muvaffaqiyatli yangilandi"
+  validationAcceptedMsg: "Shaxsni tasdiqlash bo'yicha so'rovingiz qabul qilindi"
   settingsInitialCaption: "Muloqot tili: ${lang}\nTelefon: +${number}\nUmumiy ball: ${score}\n\nQuyidagilardan birini tanlang:"
   phoneNumberSettingsCaption: "Muloqot tili: ${lang}\nTelefon: +${number}\nUmumiy ball: ${score}\n\nTelefon raqamingizni yuboring:"
   MainMenuBtn: "Asosiy Menu"
   langOfBot: "Muloqot tili"
   userPhoneNumberBtn: "Telefon raqam"
   userPhoneUpdatedSuccessMsg: "Telefon raqamingizni muvaffaqiyatli yangilandi"
+  bestWorkCaption: "Eng yaxshi ish aksiyasida ishtirok etish bo'yicha soo'rov\n\nTelefon raqami: +${phoneNumber}\nYuborish sanasi: ${date}"
 Operator:
   operatorConfirmedMsg: Buyurtma muvafaqqiyatli tasdiqlandi
 sendRuCompanyTextMsg: "Kompaniya matnini rus tilida yuboring"

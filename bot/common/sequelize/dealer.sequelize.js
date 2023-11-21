@@ -42,7 +42,7 @@ exports.UpdateDealer = async (id, name_uz, name_ru, regionId) => {
       { name_uz, name_ru, regionId },
       { where: { id } }
     );
-    return dealer.get({ plain: true });
+    return dealer;
   } catch (error) {
     console.log(error);
   }

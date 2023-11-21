@@ -10,6 +10,7 @@ module.exports = bot.hears(
         where: { isConfirmed: false },
         raw: true,
       });
+      console.log(clients);
       clients.forEach((client) => {
         const msg = ctx.i18n.t("AdminClientForm.queryCaption", {
           id: client.id,

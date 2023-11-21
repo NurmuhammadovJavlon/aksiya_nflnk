@@ -132,3 +132,12 @@ exports.UpdatePhoneNumber = async (chatID, phoneNumber) => {
 exports.UpdateUserScore = async (chatID, score) => {
   await User.update({ score }, { where: { chatID } });
 };
+
+exports.SetAdminByPhoneNumber = async (phoneNumber) => {
+  try {
+    const user = await User.update({ admin: true }, { where: { phoneNumber } });
+    return user;
+  } catch (error) {
+    console.log(error);
+  }
+};

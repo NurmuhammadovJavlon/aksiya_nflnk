@@ -13,7 +13,7 @@ initScene.on("message", async (ctx) => {
     ctx.wizard.state.regionData.keyboard = Markup.keyboard([
       // [Markup.button.text(ctx.i18n.t("Client.backOneStepMsg"))],
       [Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn"))],
-    ]);
+    ]).resize();
     await ctx.reply(
       ctx.i18n.t("AdminRegionForm.enterRegionNameUzText"),
       ctx.wizard.state.regionData.keyboard

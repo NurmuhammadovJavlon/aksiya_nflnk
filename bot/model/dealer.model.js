@@ -31,7 +31,16 @@ const Dealer = db.define(
   }
 );
 
-Dealer.hasMany(Product);
+Dealer.belongsToMany(Product, {
+  through: "Dealer_Products",
+  as: "products",
+  foreignKey: "dealerId",
+});
+Product.belongsToMany(Dealer, {
+  through: "Dealer_Products",
+  as: "dealers",
+  foreignKey: "productId",
+});
 Dealer.hasMany(Operator);
 Operator.belongsTo(Dealer);
 Dealer.hasMany(Order, { onDelete: "CASCADE" });

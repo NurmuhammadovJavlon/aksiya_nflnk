@@ -16,9 +16,6 @@ const {
 
 const sendDealerKeys = async (ctx) => {
   try {
-    ctx.wizard.state.productForm.dealerPage = 1;
-    ctx.wizard.state.productForm.itemsPerPage = 2;
-
     const dealers = await GetDealersWithPagination(
       ctx.wizard.state.productForm.dealerPage,
       ctx.wizard.state.productForm.itemsPerPage
@@ -29,16 +26,54 @@ const sendDealerKeys = async (ctx) => {
       return;
     }
 
-    const keyboard = generateItemsKeyboard(
-      ctx.wizard.state.productForm.dealerPage,
-      ctx.i18n.locale(),
-      dealers.totalItems,
-      ctx.wizard.state.productForm.itemsPerPage,
-      dealers.items,
-      ctx.i18n
+    const endPage = Math.ceil(
+      dealers.totalItems / ctx.wizard.state.productForm.itemsPerPage
     );
-    // await ctx.deleteMessage(ctx.update.message.message_id);
-    await ctx.reply(ctx.i18n.t("AdminDealerForm.chooseDealerTxt"), keyboard);
+    const keyboards = [
+      ...dealers.items?.map((item) => {
+        const name =
+          ctx.i18n.locale() === "uz"
+            ? item.name_uz
+            : ctx.i18n.locale() === "ru"
+            ? item.name_ru
+            : null;
+        const finalName = ctx.wizard.state.productForm.dealer.ids.includes(
+          item.id
+        )
+          ? `${name} – ✅`
+          : name;
+        return [Markup.button.callback(finalName, `i_${item.id}`)];
+      }),
+    ];
+
+    // Add pagination buttons
+    const paginationButtons = [];
+    if (ctx.wizard.state.productForm.dealerPage > 1) {
+      paginationButtons.push(Markup.button.callback("⬅️", `prev`));
+    }
+    if (ctx.wizard.state.productForm.dealerPage < endPage) {
+      paginationButtons.push(Markup.button.callback("➡️", `next`));
+    }
+
+    if (paginationButtons.length > 0) {
+      keyboards.push(paginationButtons);
+    }
+
+    keyboards.push([
+      Markup.button.callback(
+        ctx.i18n.t("Client.cancelApplicationBtn"),
+        `cancel`
+      ),
+      Markup.button.callback(
+        ctx.i18n.t("AdminProductForm.finishSelectionBtn"),
+        `finish`
+      ),
+    ]);
+
+    await ctx.reply(
+      ctx.i18n.t("AdminDealerForm.chooseDealerTxt"),
+      Markup.inlineKeyboard(keyboards)
+    );
   } catch (error) {
     console.log(error);
   }
@@ -60,7 +95,7 @@ startStep.hears(match("AdminProductForm.addProductBtn"), async (ctx) => {
     ctx.wizard.state.productForm.keyboard = Markup.keyboard([
       // [Markup.button.text(ctx.i18n.t("Client.backOneStepMsg"))],
       [Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn"))],
-    ]);
+    ]).resize();
     await ctx.reply(
       ctx.i18n.t("AdminProductForm.enterUzProductNameMsg"),
       ctx.wizard.state.productForm.keyboard
@@ -141,6 +176,9 @@ getRuCaption.on("message", async (ctx) => {
   try {
     ctx.wizard.state.productForm.caption_ru = ctx.update.message.text;
     ctx.wizard.state.productForm.dealer = {};
+    ctx.wizard.state.productForm.dealerPage = 1;
+    ctx.wizard.state.productForm.itemsPerPage = 2;
+    ctx.wizard.state.productForm.dealer.ids = [];
     await sendDealerKeys(ctx);
     return ctx.wizard.next();
   } catch (error) {
@@ -151,6 +189,7 @@ getRuCaption.on("message", async (ctx) => {
 const connectDealerStep = new Composer();
 connectDealerStep.action("cancel", async (ctx) => {
   try {
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await GoBack(ctx);
     return ctx.scene.leave();
   } catch (error) {
@@ -176,28 +215,14 @@ connectDealerStep.action(["prev", "next"], async (ctx) => {
         ctx.wizard.state.productForm.dealerPage++;
         break;
     }
-    const dealers = await GetDealersWithPagination(
-      ctx.wizard.state.productForm.dealerPage,
-      ctx.wizard.state.productForm.itemsPerPage
-    );
-    const keyboard = generateItemsKeyboard(
-      ctx.wizard.state.productForm.dealerPage,
-      ctx.i18n.locale(),
-      dealers.totalItems,
-      ctx.wizard.state.productForm.dealerPage,
-      dealers.items,
-      ctx.i18n
-    );
-    await ctx.editMessageText(
-      ctx.i18n.t("AdminDealerForm.chooseDealerTxt"),
-      keyboard
-    );
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+    await sendDealerKeys(ctx);
     return;
   } catch (error) {
     console.log(error);
   }
 });
-connectDealerStep.on("callback_query", async (ctx) => {
+connectDealerStep.action(/i_(\d+)/, async (ctx) => {
   try {
     if (!ctx.update.callback_query?.data.includes("i_")) {
       return ctx.reply("invalid_callback_query");
@@ -206,7 +231,30 @@ connectDealerStep.on("callback_query", async (ctx) => {
       ctx.update.callback_query?.data.match(/i_(\d+)/)[1],
       10
     );
-    ctx.wizard.state.productForm.dealerId = dealerId;
+
+    if (!ctx.wizard.state.productForm.dealer.ids.includes(dealerId)) {
+      ctx.wizard.state.productForm.dealer.ids = [
+        ...ctx.wizard.state.productForm.dealer.ids,
+        dealerId,
+      ];
+    } else if (ctx.wizard.state.productForm.dealer.ids.includes(dealerId)) {
+      ctx.wizard.state.productForm.dealer.ids = [
+        ...ctx.wizard.state.productForm.dealer.ids.filter(
+          (id) => id !== dealerId
+        ),
+      ];
+    }
+    // ctx.wizard.state.productForm.dealerId = dealerId;
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+    await sendDealerKeys(ctx);
+    return;
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+connectDealerStep.action("finish", async (ctx) => {
+  try {
     await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await ctx.reply(ctx.i18n.t("AdminProductForm.sendProductPhotoMsg"));
     return ctx.wizard.next();
@@ -270,7 +318,7 @@ confirmDetailStep.action(["yes", "no"], async (ctx) => {
         ctx.wizard.state.productForm.name_ru,
         ctx.wizard.state.productForm.photo,
         ctx.wizard.state.productForm.photoPublic_id,
-        ctx.wizard.state.productForm.dealerId,
+        ctx.wizard.state.productForm.dealer.ids,
         ctx.wizard.state.productForm.caption_uz,
         ctx.wizard.state.productForm.caption_ru
       );

@@ -4,8 +4,9 @@ const { Markup } = require("telegraf");
 // const generatePromotionButtons = require("../../functions/keyboards/promotion.keyboards");
 
 module.exports = bot.hears(match("participateBtn"), async (ctx) => {
-  if (!ctx.session.prType) {
-    return;
+  if (ctx.session.prType === 1) {
+    return ctx.scene.enter("FirstEventWizard");
+  } else if (ctx.session.prType === 2) {
+    await ctx.scene.enter("BestWorkPromotionWizard");
   }
-  await ctx.scene.enter("FirstEventWizard");
 });

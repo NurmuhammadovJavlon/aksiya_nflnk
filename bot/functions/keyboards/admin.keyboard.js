@@ -19,7 +19,6 @@ async function generateAdminKeys(ctx) {
         Markup.button.text(ctx.i18n.t("Admin.ordersBtn")),
         Markup.button.text(ctx.i18n.t("Admin.productsBtn")),
       ],
-      // [Markup.button.text(ctx.i18n.t("Admin.queriesBtn"))],
       [
         Markup.button.text(ctx.i18n.t("Admin.operatorsBtn")),
         Markup.button.text(ctx.i18n.t("Admin.scoreInfoBtn")),
@@ -28,6 +27,7 @@ async function generateAdminKeys(ctx) {
         Markup.button.text(ctx.i18n.t("Admin.companyInfoBtn")),
         Markup.button.text(ctx.i18n.t("Admin.contactInfoBtn")),
       ],
+      [Markup.button.text(ctx.i18n.t("Admin.checkClientsBtn"))],
       [Markup.button.text(ctx.i18n.t("backToMainMenuBtn"))],
     ])
       .oneTime()

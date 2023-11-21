@@ -22,6 +22,7 @@ adminPanelBtn: Панель администратора
 notAdminText: Вы не администратор
 errorText: Что-то пошло не так
 dataSavedMsg: Данные успешно созданы/редактированы
+skipBtn: Пропускать
 Admin:
   regionsBtn: Регионы
   dealersBtn: Дилеры
@@ -29,6 +30,7 @@ Admin:
   productsBtn: Продукты
   queriesBtn: Запросы
   operatorsBtn: Операторы
+  checkClientsBtn: Проверка личности
   companyInfoBtn: Текст о компании
   contactInfoBtn: Текст о контактах
   scoreInfoBtn: Текст системы баллов
@@ -73,9 +75,10 @@ AdminProductForm:
   enterUzProductCaptionMsg: "Введите описание товара на узбекском языке"
   sendProductPhotoMsg: "Отправьте фото товара"
   confirmationMessage: "Имя продукта (узбекское): ${name_uz}\nНазвание продукта (русское): ${name_ru}\n\nВы подтверждаете эти данные?"
-  productUpdateMsg: "Название продукта: ${productName}\nОписание: ${desc}"
+  productUpdateMsg: "Название продукта: ${productName}\nОписание: ${desc}\n\n${dealerMsg}"
   productIsArchivedMsg: "Товар в архиве"
   productIsUnArchivedMsg: "Товар разархивирован"
+  finishSelectionBtn: "Готово"
 AdminOrderForm:
   panelTxt: Админ-панель для заказов
   recentUnValidatedOrdersBtn: Неподтвержденные заказы
@@ -129,12 +132,14 @@ Client:
   finalRespondMsgForValidation: "Спасибо, мы рассмотрим инфо в ближающее время"
   noClientsWithThese: "Для введенных идентификаторов информация недоступна."
   validtationFinishedMsg: "Успешно обновлено"
+  validationAcceptedMsg: "Ваш запрос на подтверждение личности принят"
   settingsInitialCaption: "Язык: ${lang}\nТелефон: +${number}\nОбщий балл: ${score}\n\nВыберите один из следующих вариантов:"
   phoneNumberSettingsCaption: "Язык: ${lang}\nТелефон: +${number}\nОбщий балл: ${score}\n\nОтправите номер телефона:"
   MainMenuBtn: "Главное меню"
   langOfBot: "Язык"
   userPhoneNumberBtn: "Номер телефона"
   userPhoneUpdatedSuccessMsg: "Ваш номер телефона успешно обновлен"
+  bestWorkCaption: "Участие в «Акция лучшая работа»\n\nНомер телефона: +${phoneNumber}\n\nДата отправки: ${date}"
 Operator:
   operatorConfirmedMsg: Заказ успешно подтвержден
 sendRuCompanyTextMsg: "Отправить текст компании на русском языке"

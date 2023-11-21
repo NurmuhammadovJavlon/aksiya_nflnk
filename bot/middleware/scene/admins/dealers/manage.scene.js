@@ -24,7 +24,7 @@ startStep.hears(match("AdminDealerForm.manageDealersBtn"), async (ctx) => {
     ctx.wizard.state.dealerData = {};
     ctx.wizard.state.dealerData.dealer = {};
     ctx.wizard.state.dealerData.dealer.regionPage = 1;
-    ctx.wizard.state.dealerData.dealer.itemsPerPage = 2;
+    ctx.wizard.state.dealerData.dealer.itemsPerPage = 6;
 
     const dealers = await GetDealersWithPagination(
       ctx.wizard.state.dealerData.dealer.regionPage,
@@ -32,8 +32,10 @@ startStep.hears(match("AdminDealerForm.manageDealersBtn"), async (ctx) => {
     );
 
     if (dealers.totalItems === 0) {
-      await ctx.reply(ctx.i18n.t("Client.emptyDataMsg"));
-      return;
+      // await ctx.deleteMessage(ctx.update.message.message_id);
+      const MainMenu = await generateDealerAdminKeys(ctx);
+      await ctx.reply(ctx.i18n.t("Client.emptyDataMsg"), MainMenu);
+      return ctx.scene.leave();
     }
 
     const keyboard = generateItemsKeyboard(
@@ -44,7 +46,7 @@ startStep.hears(match("AdminDealerForm.manageDealersBtn"), async (ctx) => {
       dealers.items,
       ctx.i18n
     );
-    // await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+
     await ctx.reply(ctx.i18n.t("AdminDealerForm.chooseDealerTxt"), keyboard);
   } catch (error) {
     console.log(error);
@@ -91,7 +93,7 @@ startStep.action("cancel", async (ctx) => {
     console.log(error);
   }
 });
-startStep.on("callback_query", async (ctx) => {
+startStep.action(/i_(\d+)/, async (ctx) => {
   try {
     if (!ctx.update.callback_query?.data.includes("i_")) {
       return ctx.reply("invalid_callback_query");
@@ -143,8 +145,9 @@ manageStep.action("back", async (ctx) => {
     );
 
     if (dealers.totalItems === 0) {
-      await ctx.answerCbQuery(ctx.i18n.t("Client.emptyDataMsg"));
-      return;
+      await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+      await ctx.reply(ctx.i18n.t("Client.emptyDataMsg"));
+      return ctx.scene.leave();
     }
 
     const keyboard = generateItemsKeyboard(
@@ -155,7 +158,7 @@ manageStep.action("back", async (ctx) => {
       dealers.items,
       ctx.i18n
     );
-    // await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+
     await ctx.editMessageText(
       ctx.i18n.t("AdminDealerForm.chooseDealerTxt"),
       keyboard
@@ -174,8 +177,9 @@ manageStep.action("delete", async (ctx) => {
     );
 
     if (dealers.totalItems === 0) {
+      const MainMenu = await generateDealerAdminKeys(ctx);
       await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-      await ctx.reply(ctx.i18n.t("Client.emptyDataMsg"));
+      await ctx.reply(ctx.i18n.t("Client.emptyDataMsg"), MainMenu);
       return;
     }
 
@@ -187,7 +191,7 @@ manageStep.action("delete", async (ctx) => {
       dealers.items,
       ctx.i18n
     );
-    // await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+
     await ctx.editMessageText(
       ctx.i18n.t("AdminDealerForm.chooseDealerTxt"),
       keyboard
@@ -256,7 +260,7 @@ manageStep.action("edit", async (ctx) => {
     ctx.wizard.state.dealerData.dealer.form.keyboard = Markup.keyboard([
       // [Markup.button.text(ctx.i18n.t("Client.backOneStepMsg"))],
       [Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn"))],
-    ]);
+    ]).resize();
     await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await ctx.reply(
       ctx.i18n.t("AdminDealerForm.enterDealerUzName"),
@@ -401,18 +405,18 @@ connectRegionStep.action(["prev", "next"], async (ctx) => {
     }
     const regions = await getRegionsWithPagination(
       ctx.wizard.state.dealerData.dealer.form.region.regionPage,
-      ctx.wizard.state.dealerData.dealer.form.region.regionPage
+      ctx.wizard.state.dealerData.dealer.form.region.itemsPerPage
     );
     const keyboard = generateItemsKeyboard(
       ctx.wizard.state.dealerData.dealer.form.region.regionPage,
       ctx.i18n.locale(),
       regions.totalItems,
-      ctx.wizard.state.dealerData.dealer.form.region.regionPage,
+      ctx.wizard.state.dealerData.dealer.form.region.itemsPerPage,
       regions.items,
       ctx.i18n
     );
     await ctx.editMessageText(
-      ctx.i18n.t("AdminDealerForm.chooseDealerTxt"),
+      ctx.i18n.t("AdminRegionForm.chooseRegionTxt"),
       keyboard
     );
     return;
@@ -430,7 +434,7 @@ connectRegionStep.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
     console.log(error);
   }
 });
-connectRegionStep.on("callback_query", async (ctx) => {
+connectRegionStep.action(/i_(\d+)/, async (ctx) => {
   try {
     if (!ctx.update.callback_query?.data.includes("i_")) {
       return ctx.reply("invalid_callback_query");

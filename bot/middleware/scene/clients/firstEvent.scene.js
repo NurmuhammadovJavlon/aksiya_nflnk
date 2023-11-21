@@ -17,11 +17,21 @@ const {
   GetOperatorsByDealerId,
 } = require("../../../common/sequelize/operator.sequelize");
 const generateMainMenuKeys = require("../../../functions/keyboards/main-menu.keyboard");
+const generatePromotionButtons = require("../../../functions/keyboards/promotion.keyboards");
+
+const GoBack = async (ctx) => {
+  try {
+    const keyboard = generatePromotionButtons(ctx);
+    await ctx.reply(ctx.i18n.t("Client.applicationCanceledMsg"), keyboard);
+    return ctx.scene.leave();
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 const getRegion = new Composer();
 getRegion.action("cancel", async (ctx) => {
-  await ctx.reply(ctx.i18n.t("Client.applicationCanceledMsg"));
-  return ctx.scene.leave();
+  await GoBack(ctx);
 });
 getRegion.on("message", async (ctx) => {
   try {
@@ -84,7 +94,7 @@ getRegion.action(["prev", "next"], async (ctx) => {
     console.log(error);
   }
 });
-getRegion.on("callback_query", async (ctx) => {
+getRegion.action(/i_(\d+)/, async (ctx) => {
   try {
     if (!ctx.update.callback_query?.data.includes("i_")) {
       return ctx.reply("invalid_callback_query");
@@ -130,8 +140,7 @@ getRegion.on("callback_query", async (ctx) => {
 
 const getDealer = new Composer();
 getDealer.action("cancel", async (ctx) => {
-  await ctx.reply(ctx.i18n.t("Client.applicationCanceledMsg"));
-  return ctx.scene.leave();
+  await GoBack(ctx);
 });
 getDealer.action("back", async (ctx) => {
   try {
@@ -186,7 +195,7 @@ getDealer.action(["prev", "next"], async (ctx) => {
     console.log(error);
   }
 });
-getDealer.on("callback_query", async (ctx) => {
+getDealer.action(/i_(\d+)/, async (ctx) => {
   try {
     if (!ctx.update.callback_query?.data.includes("i_")) {
       return ctx.reply("invalid_callback_query");
@@ -229,8 +238,7 @@ getDealer.on("callback_query", async (ctx) => {
 
 const getProduct = new Composer();
 getProduct.action("cancel", async (ctx) => {
-  await ctx.reply(ctx.i18n.t("Client.applicationCanceledMsg"));
-  return ctx.scene.leave();
+  await GoBack(ctx);
 });
 getProduct.action("back", async (ctx) => {
   try {
@@ -285,7 +293,7 @@ getProduct.action(["prev", "next"], async (ctx) => {
     console.log(error);
   }
 });
-getProduct.on("callback_query", async (ctx) => {
+getProduct.action(/i_(\d+)/, async (ctx) => {
   try {
     if (!ctx.update.callback_query?.data.includes("i_")) {
       return ctx.reply("invalid_callback_query");
@@ -316,8 +324,7 @@ getProduct.on("callback_query", async (ctx) => {
 
 const getAmount = new Composer();
 getAmount.action("cancel", async (ctx) => {
-  await ctx.reply(ctx.i18n.t("Client.applicationCanceledMsg"));
-  return ctx.scene.leave();
+  await GoBack(ctx);
 });
 getAmount.action("back", async (ctx) => {
   try {
@@ -382,32 +389,29 @@ getAmount.on("message", async (ctx) => {
       ctx.wizard.state.formData.dealer.dealerId
     );
 
-    const processedOperators = new Set();
-    const interval = setInterval(() => {
-      operators.forEach(async (operator) => {
-        if (!processedOperators.has(operator.chatId)) {
-          try {
-            await ctx.telegram.sendMessage(
-              operator.chatId,
-              operatorNotification.text,
-              operatorNotification.buttons
-            );
-            processedOperators.add(operator.chatId);
-            // console.log(`Message sent to ${operator.name}`);
-          } catch (error) {
-            console.error(
-              `Error sending message to operator.name: ${error.message}`
-            );
-          }
-        }
-      });
-    }, 3000);
+    console.log(operators);
 
-    // Stop sending messages after a certain time (e.g., 30 seconds)
-    setTimeout(() => {
-      clearInterval(interval);
-      console.log("Messages sent to all operators.");
-    }, 30000); // Stop after 30 seconds (30000 milliseconds)
+    const processedOperators = new Set();
+    operators.forEach(async (operator) => {
+      if (!processedOperators.has(operator.chatId)) {
+        try {
+          await ctx.telegram.sendMessage(
+            operator.chatId,
+            operatorNotification.text,
+            operatorNotification.buttons
+          );
+          processedOperators.add(operator.chatId);
+          // console.log(`Message sent to ${operator.name}`);
+        } catch (error) {
+          console.error(
+            `Error sending message to operator.name: ${error.message}`
+          );
+        }
+      }
+
+      // Introduce a delay (e.g., 3 seconds) before sending to the next admin
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    });
 
     const finalMsg = {
       text: ctx.i18n.t("Client.waitForOperatorsMsg"),
