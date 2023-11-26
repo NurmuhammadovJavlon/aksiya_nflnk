@@ -81,6 +81,7 @@ exports.GetOrderById = async (orderId) => {
       where: {
         id: orderId,
       },
+      raw: true,
     });
     return order;
   } catch (error) {

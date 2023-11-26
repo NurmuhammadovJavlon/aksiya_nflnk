@@ -15,6 +15,7 @@ async function generateOrderAdminKeys(ctx) {
         Markup.button.text(
           ctx.i18n.t("AdminOrderForm.recentUnValidatedOrdersBtn")
         ),
+        Markup.button.text(ctx.i18n.t("AdminOrderForm.orderStatusBtn")),
       ],
       [Markup.button.text(ctx.i18n.t("Admin.backToAdminPanel"))],
     ])

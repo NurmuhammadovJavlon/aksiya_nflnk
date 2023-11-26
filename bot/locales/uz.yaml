@@ -1,6 +1,8 @@
 ---
 greeting: Salom
-enterPhoneNumber: "Telefon raqamingizni kiriting:"
+enterPhoneNumber: "Telefon raqamingizni kiriting:\n\n<i>(Namuna: +998 XX XXX XX XX)</i>"
+enterNameMsg: "Ismingizni kiriting:"
+enterSecondNameMsg: "Familiyangizni kiriting:"
 notRegisteredMsg: Botdan foydalanish uchun avval /start tugmasini bosibg ro'yxatdan o'ting
 promotionBtn: Aksiya
 aboutCompanyBtn: Kompaniya haqida ma'lumot
@@ -32,6 +34,8 @@ Admin:
   queriesBtn: So'rovlar
   operatorsBtn: Operatorlar
   checkClientsBtn: Shaxsni tasdiqlash (admin)
+  usersBtn: Foydalanuvchilarni boshqarish
+  allTextsBtn: Barcha matnlar
   companyInfoBtn: Kompaniya haqida matn
   contactInfoBtn: Kontaktlar haqida matn
   scoreInfoBtn: Ball tizimi haqida matn
@@ -76,7 +80,7 @@ AdminProductForm:
   enterUzProductCaptionMsg: "Mahsulot tavsifini oʻzbek tilida kiriting"
   sendProductPhotoMsg: "Mahsulot rasmini yuboring"
   confirmationMessage: "Mahsulot nomi (oʻzbekcha): ${name_uz}\nMahsulot nomi (ruscha): ${name_ru}\n\nUshbu maʼlumotni tasdiqlaysizmi?"
-  productUpdateMsg: "Mahsulot nomi: ${productName}\nTavsif: ${desc}\n\n${dealerMsg}"
+  productUpdateMsg: "Mahsulot nomi: ${productName}\nTavsif: ${desc}"
   productIsArchivedMsg: "Mahsulotlar arxivlandi"
   productIsUnArchivedMsg: "Mahsulot arxivdan chiqarildi"
   finishSelectionBtn: "Tayyor"
@@ -85,25 +89,41 @@ AdminOrderForm:
   recentUnValidatedOrdersBtn: Tasdiqlanmagan buyurtmalar
   orderUpdateMsg: "ID: ${id}\n Summa: ${amount}\nTasdiqlangan: ${confirmed}"
   confirmBtn: Tasdiqlash
+  orderStatusBtn: Buyurtma holati
+  orderViewTypesMsg: Buyurtmalarni qaysi ma'lumot orqali ko'rmoqchisiz
+  phoneNumberBtn: Nomer telefon
+  sendUserPhoneNumber: Foydalanuvchi telefon raqamini yuboring
+  sendOrderIdMsg: "Buyurtma identifikatorini yuboring"
+  orderCaptionMsg: "ID: ${id}\n Summa: ${amount}\nTasdiqlangan: ${confirmed}\nFoydalanuvchi: ${name}\nFoydalanuvchi telefon raqami: ${phoneNumber}\nSanasi: ${date}"
+  orderIsConfirmedMsg: Buyurtma muvaffaqiyatli tasdiqlandi
 AdminClientForm:
   panelTxt: Shaxsni tasdiqlash uchun so'rovnomalar boshqaruv paneli
   recentUnValidatedClientsBtn: Tasdiqlanmagan so'rovnomalar
-  queryCaption: "№ ${id} Shaxsni tasdiqlash\n\nJoylashuv: ${location}\nXodimlar soni: ${numberOfEmployees}"
+  queryCaption: "№ ${id} Shaxsni tasdiqlash\n\nFoydalanuvchi Ismi: ${firstname}\nFoydalanuvchi familiyasi: ${surname}\nTelefon raqami: ${phoneNumber}\nJoylashuv: ${location}\nXodimlar soni: ${numberOfEmployees}"
+  sendReasonOfRejection: "Rad etish sababini yozing:"
 AdminOperatorForm:
   addOperatorBtn: Operator qo'shish
   manageOperatorBtn: Operatorlarni boshqarish
   sendOperatorContactMsg: Operator kontakt raqamini jo'nating
-  operatorAddedSuccessfully: Оператор успешно добавлен
+  operatorAddedSuccessfully: Operator muvaffaqiyatli qo'shildi
   chooseOneOperatorMsg: Quyidagi operatorlardan birini tanlang
   operatorInfoMsg: "Operator nomi: ${name}\nOperator telefon raqami: ${phoneNumber}\nDiler: ${dealerName}"
   changeDealerBtn: Dilerni almashtirish
+AdminTextsForm:
+  panelTxt: "Matnlar uchun admin panel"
+  firstEventTextBtn: "'Aksiya 25 yil' matni"
+  bestWorkInfoBtn: "Eng yaxshi ish aksiya matni"
+  sendPhotoMsg: "Aksiya matni uchun rasm jo'nating"
+  sendEventTextUzMsg: "Matn jo'nating (uz)"
+  sendEventTextRuMsg: "Matn jo'nating (ru)"
+  confirmationMsg: "Aksiya matni\n\nUz:\n\n${text_uz}\n\nRu:\n\n${text_ru}"
 Client:
   emptyDataMsg: Ma'lumotlar mavjud emas
   chooseDealerTxt: "Quyidagi dillerlardan birini tanlang:"
   chooseProductTxt: "Quyidagi mahsulotlardan birini tanlang:"
-  enterAmountTxt: "Buyurtma miqdorini kiriting:"
-  operatorNotificationTxt: Yangi kiruvchi buyurtma bor, tekshiring va tasdiqlang
-  sendPhoneNumberMsg: Telefon raqamni yuborish
+  enterAmountTxt: "Buyurtma miqdorini kiriting:\nMinimum summa: 300 000 so'm\n\n<i>(Namuna: 1 000 000 / 1,000,000 / 300,000)</i>"
+  operatorNotificationTxt: "Yangi kiruvchi buyurtma bor, tekshiring va tasdiqlang:\n\nID: ${orderId}\n\nMahsulot nomi: ${productName}\nSumma: ${amount}\nFoydalanuvchi Ismi: ${firstName}\nFoydalanuvchi familiyasi: ${lastName}\nYuborilgan sana: ${date}"
+  sendPhoneNumberMsg: "Telefon raqamni yuborish"
   sendValidPhoneNumberMsg: "To'g'ri telefon raqamni yuboring:"
   otpCodeisSentMsg: Tasdiqlash kodi ${phoneNumber} telefon raqamiga yuborildi
   otpCodeMsg: "Tasdiqlash kodingiz:"
@@ -124,7 +144,7 @@ Client:
   applicationCanceledMsg: "Ariza bekor qilindi"
   waitForOperatorsMsg: Operatorlar tomonidan tasdiqlanishini kuting
   maxVideoSizeLimitMsg: "Kechirasiz, video hajmi chegaradan oshib ketdi. Maksimal hajmi: 50 MB"
-  sentVideoSizeMsg: "Siz yuborgan video hajmi:"
+  sentVideoSizeMsg: "Siz yuborgan video hajmi: ${videoSize}\n\nYuqoridagi video operatorlarga yuborilsinmi?"
   totalScoreMsg: "Siz to'plagan umumiy ball: ${score}"
   sendLocationMsg: "Joylashuvni yuboring:"
   sendLocationBtn: "📍Joylashuvni jo'natish"
@@ -133,6 +153,7 @@ Client:
   sendOutsideVideoMsg: "Ustaxona tashqarisidan video yuboring"
   askForEmployeesNumberMsg: "Ustaxonada nechta ishchi ishlaydi?"
   finalRespondMsgForValidation: "Rahmat, tez orada ma'lumotlarni ko'rib chiqamiz"
+  workConfirmationMsgToUser: "Ishtirok etganingiz uchun tashakkur! Tanlov yakunida g'olibni e'lon qilamiz."
   noClientsWithThese: "Siz kiritigan ID lar bo'yicha ma'lumotlar mavjud emas yoki allaqachon tasdiqlangan"
   validtationFinishedMsg: "Muvaffaqiyatli yangilandi"
   validationAcceptedMsg: "Shaxsni tasdiqlash bo'yicha so'rovingiz qabul qilindi"
@@ -142,9 +163,18 @@ Client:
   langOfBot: "Muloqot tili"
   userPhoneNumberBtn: "Telefon raqam"
   userPhoneUpdatedSuccessMsg: "Telefon raqamingizni muvaffaqiyatli yangilandi"
-  bestWorkCaption: "Eng yaxshi ish aksiyasida ishtirok etish bo'yicha soo'rov\n\nTelefon raqami: +${phoneNumber}\nYuborish sanasi: ${date}"
+  bestWorkCaption: "№ ${workId} Eng yaxshi ish aksiyasida ishtirok etish bo'yicha soo'rov\n\nTelefon raqami: +${phoneNumber}\nMijoz ismi: ${firstName}\nMijoz familiyasi: ${lastName}\nMijozning joylashuvi: ${clientLocation}\nYuborish sanasi: ${date}"
+  confirmPurchaseMsg: "<b>Region</b>: ${regionName}\n<b>Diller</b>: ${dealerName}\n<b>Mahsulot</b>: ${productName}\n<b>Summa</b>: ${amount}\n\n<b>Buyurtmani tasdiqlaysizmi?</b>"
+  minPurchaseMsg: "Kam summa kiritildi, minimum buyurtma miqdori 300,000 so'm"
+  confirmAsClientMsg: "Shaxsni tasdiqlash kerak"
+  purchaseIsConfirmedMsg: Ushbu buyurtma boshqa operator tomonidan tasdiqlangan
+  videoIsConfirmedMsg: Ushbu video boshqa admin tomonidan ko'rib chiqildi
+  sendOnlyVideosMsg: Faqat video jo'nating
+  confirmLocationMsg: "Manzil: ${location}\nYuqoridagi manzil to'g'rimi?"
+  editLocationMsg: "To'g'ri manzilni yuboring"
 Operator:
   operatorConfirmedMsg: Buyurtma muvafaqqiyatli tasdiqlandi
+  workIsConfirmedMsg: "Siz yuborgan video ko'rib chiqildi va qabul qilindi"
 sendRuCompanyTextMsg: "Kompaniya matnini rus tilida yuboring"
 sendUzCompanyTextMsg: "Kompaniya matnini o'zbek tilida yuboring"
 sendRuContactTextMsg: "Kontakt matnini rus tilida yuboring"
@@ -156,6 +186,8 @@ Complain:
   writeComplainBtn: Shikoyat yozish
   writeComplainMsg: "Shikoyatingiz haqida yozing"
   complainIsSentMsg: "Rahmat, shikoyatingizni tez orada ko‘rib chiqamiz"
+  finalComplainMsg: "Shikoyat: ${firstName} ${lastName}\nTelefon raqami: +${phoneNumber}\nXabar: ${complainMsg}\n\nSana: ${date}"
+  videoOrMsgIsRequired: "Hech bo'lmaganda video yoki xabar yuborishingiz kerak"
 Score:
   infoAboutScorebtn: "Ball tizimi haqida"
   purchaseHistoryBtn: "Xaridlar tarixi"
@@ -163,4 +195,28 @@ Score:
   myscoreBtn: Mening ballarim
   sendRuScoreTextMsg: Rus tilida ball tizimi haqida ma'lumot yuboring
   sendUzScoreTextMsg: O'zbek tilida ball tizimi haqida ma'lumot yuboring
-purchaseHistoryMsg: "Buyurtma miqdori: ${amount}\nDiler: ${dealerName}\nStatus: {status}\nSanasi: ${date}\n__ __ __ __ __ __ __ __"
+purchaseHistoryMsg: "Buyurtma nomeri: №${orderId}\nBuyurtma miqdori: ${amount}\nDiler: ${dealerName}\nStatus: ${status}\nSanasi: ${date}\n__ __ __ __ __ __ __ __"
+AdminUserManagement:
+  panelTxt: Foydalanuvchilarni boshqarish uchun admin panel
+  getInfoBtn: Foydalanuvchi ma'lumotlari
+  registerUserBtn: Foydalanuvchini ro'yxatdan o'tkazish
+  sendUserPhoneNumberMsg: Foydalanuvchi telefon raqamini yuboring
+  userInfoCaption: "<b>Foydalanuvchi nomeri</b>: №${userId}\n<b>Foydalanuvchi ismi</b>: ${firstName}\n<b>Foydalanuvchi familiyasi</b>: ${lastName}\n<b>Admin</b>: ${isAdmin}\n<b>Super Admin</b>: ${isSuperAdmin}\n<b>Operator</b>: ${isOperator}\n<b>Muloqot tili</b>: ${lang}\n<b>Telefon raqami</b>: ${phoneNumber}\n<b>Ballari</b>: ${score}\n<b>Ro'yxatdan o'tgan sanasi</b>: ${createdAt}"
+  sendMessageBtn: "Xabar yuborish"
+  sendMessageTxt: "Foydalanuvchiga xabar yozing"
+  confirmMsg: "<b>Shu xabarni yuborishni tasdiqlaysizmi?</b>\n\n${message}"
+  messageIsSent: "Xabar muvaffaqiyatli yuborildi"
+  enterUserName: "Foydalanuvchi ismini kiriting"
+  enterUserLastName: "Foydalanuvchi familiyasini kiriting"
+  chooseUserLangMsg: "Foydalanuvchi tilini tanlang"
+  enterPhonenumber: "Foydalanuvchi telefon raqamini kiriting\nMasalan: 998 XX XXX XX XX"
+  forwardFromUserMsg: "Foydalanuvchidan kelgan har qanday xabarni yo'naltirish"
+  noUserChatIdMsg: Foydalanuvchi chat identifikatori topilmadi
+  userInfoMsg: "Foydalanuvchi ismi: ${firstName}\nFoydalanuvchi familiyasi: ${lastName}\nFoydalanuvchi telefon raqami: ${phoneNumber}\nMuloqot tili: ${lang}"
+  userExistsMsg: "Foydalanuvchi mavjud"
+  userCreatedMsg: "Foydalanuvchi muvvafaqiyatli yaratildi"
+OperatorPanel:
+  operatorPanelBtn: Operator paneli
+  operatorPanelMsg: "Operatorlar uchun boshqaruv paneli"
+  unSeenOrdersbtn: Dilerning tasdiqlanmagan buyurtmalari
+  notOperatorMsg: Siz operator emassiz

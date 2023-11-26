@@ -10,8 +10,10 @@ module.exports = bot.start(async (ctx) => {
     const userExist = await getUser(chatID);
 
     // Texts
+    const helloMsg =
+      "Уважаемые участники! Добро пожаловать в бот акций компании Alutex. Мы ценим ваш интерес к нашим акциям и стремимся сделать ваше участие максимально удобным и выгодным.\n\nHurmatli ishtirokchilar! Alutex aksiyalar botiga xush kelibsiz. Aksiyalarimizga qiziqishingizni qadrlaymiz va ishtirokingizni qulay va foydali qilishga intilamiz.";
     const greeting = {
-      text: "Salom, mos tilni tanlang",
+      text: "Iltimos, tilni tanlang!\nПожалуйста, выберите язык!",
       langButtons: [
         [
           { text: "O'zbek", callback_data: "lang_uz" },
@@ -26,7 +28,8 @@ module.exports = bot.start(async (ctx) => {
     };
 
     if (!userExist) {
-      ctx.reply(greeting.text, {
+      await ctx.reply(helloMsg);
+      await ctx.reply(greeting.text, {
         reply_markup: {
           inline_keyboard: greeting.langButtons,
         },

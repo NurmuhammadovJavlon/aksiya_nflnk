@@ -175,87 +175,6 @@ getRuCaption.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
 getRuCaption.on("message", async (ctx) => {
   try {
     ctx.wizard.state.productForm.caption_ru = ctx.update.message.text;
-    ctx.wizard.state.productForm.dealer = {};
-    ctx.wizard.state.productForm.dealerPage = 1;
-    ctx.wizard.state.productForm.itemsPerPage = 2;
-    ctx.wizard.state.productForm.dealer.ids = [];
-    await sendDealerKeys(ctx);
-    return ctx.wizard.next();
-  } catch (error) {
-    console.log(error);
-  }
-});
-
-const connectDealerStep = new Composer();
-connectDealerStep.action("cancel", async (ctx) => {
-  try {
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-    await GoBack(ctx);
-    return ctx.scene.leave();
-  } catch (error) {
-    console.log(error);
-  }
-});
-connectDealerStep.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
-  try {
-    await GoBack(ctx);
-    return ctx.scene.leave();
-  } catch (error) {
-    console.log(error);
-  }
-});
-connectDealerStep.action(["prev", "next"], async (ctx) => {
-  try {
-    const match = ctx.update?.callback_query?.data;
-    switch (match) {
-      case "prev":
-        ctx.wizard.state.productForm.dealerPage--;
-        break;
-      case "next":
-        ctx.wizard.state.productForm.dealerPage++;
-        break;
-    }
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-    await sendDealerKeys(ctx);
-    return;
-  } catch (error) {
-    console.log(error);
-  }
-});
-connectDealerStep.action(/i_(\d+)/, async (ctx) => {
-  try {
-    if (!ctx.update.callback_query?.data.includes("i_")) {
-      return ctx.reply("invalid_callback_query");
-    }
-    const dealerId = parseInt(
-      ctx.update.callback_query?.data.match(/i_(\d+)/)[1],
-      10
-    );
-
-    if (!ctx.wizard.state.productForm.dealer.ids.includes(dealerId)) {
-      ctx.wizard.state.productForm.dealer.ids = [
-        ...ctx.wizard.state.productForm.dealer.ids,
-        dealerId,
-      ];
-    } else if (ctx.wizard.state.productForm.dealer.ids.includes(dealerId)) {
-      ctx.wizard.state.productForm.dealer.ids = [
-        ...ctx.wizard.state.productForm.dealer.ids.filter(
-          (id) => id !== dealerId
-        ),
-      ];
-    }
-    // ctx.wizard.state.productForm.dealerId = dealerId;
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-    await sendDealerKeys(ctx);
-    return;
-  } catch (error) {
-    console.log(error);
-  }
-});
-
-connectDealerStep.action("finish", async (ctx) => {
-  try {
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await ctx.reply(ctx.i18n.t("AdminProductForm.sendProductPhotoMsg"));
     return ctx.wizard.next();
   } catch (error) {
@@ -318,7 +237,6 @@ confirmDetailStep.action(["yes", "no"], async (ctx) => {
         ctx.wizard.state.productForm.name_ru,
         ctx.wizard.state.productForm.photo,
         ctx.wizard.state.productForm.photoPublic_id,
-        ctx.wizard.state.productForm.dealer.ids,
         ctx.wizard.state.productForm.caption_uz,
         ctx.wizard.state.productForm.caption_ru
       );
@@ -345,7 +263,6 @@ module.exports = new Scenes.WizardScene(
   getRuProductName,
   getUzCaption,
   getRuCaption,
-  connectDealerStep,
   getProductPhotoStep,
   confirmDetailStep
 );

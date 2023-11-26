@@ -47,6 +47,7 @@ const paginateOrders = async (ctx) => {
       caption +=
         "\n\n" +
         ctx.i18n.t("purchaseHistoryMsg", {
+          orderId: item.id,
           amount,
           dealerName:
             ctx.i18n.locale() === "uz"
@@ -93,7 +94,7 @@ startStep.hears(match("Score.purchaseHistoryBtn"), async (ctx) => {
   try {
     ctx.wizard.state.purchaseHistory = {};
     ctx.wizard.state.purchaseHistory.page = 1;
-    ctx.wizard.state.purchaseHistory.itemsPerPage = 3;
+    ctx.wizard.state.purchaseHistory.itemsPerPage = 15;
     ctx.wizard.state.purchaseHistory.caption = "";
     ctx.wizard.state.purchaseHistory.clientChatId = String(ctx.chat.id);
     await paginateOrders(ctx);

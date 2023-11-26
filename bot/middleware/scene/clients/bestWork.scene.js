@@ -7,6 +7,14 @@ const {
   GetAllAdminUsers,
   getUser,
 } = require("../../../common/sequelize/user.sequelize");
+const {
+  GetClietByUser,
+} = require("../../../common/sequelize/client.sequelize");
+const {
+  GetBestWork,
+  CreateBestWork,
+} = require("../../../common/sequelize/bestwork.sequelize");
+const generatePromotionButtons = require("../../../functions/keyboards/promotion.keyboards");
 
 const initScene = new Composer();
 initScene.hears(match("backToMainMenuBtn"), async (ctx) => {
@@ -44,58 +52,133 @@ sendVideo.action("cancel", async (ctx) => {
 });
 sendVideo.on("video", async (ctx) => {
   try {
-    const video = ctx.update.message.video;
-    const fileId = video.file_id;
+    ctx.wizard.state.bestwork = {};
+    ctx.wizard.state.bestwork.video = ctx.update.message?.video;
 
     const maxSizeInBytes = 50 * 1024 * 1024; // 50MB
-    if (video.file_size > maxSizeInBytes) {
+    if (ctx.wizard.state.bestwork.video.file_size > maxSizeInBytes) {
       ctx.reply(ctx.i18n.t("Client.maxVideoSizeLimitMsg"));
+      return;
     } else {
-      const fileSizeInMegabytes = video.file_size / (1024 * 1024);
+      const fileSizeInMegabytes =
+        ctx.wizard.state.bestwork.video.file_size / (1024 * 1024);
       await ctx.reply(
-        `${ctx.i18n.t("Client.sentVideoSizeMsg")} ${fileSizeInMegabytes.toFixed(
-          2
-        )} MB`
+        ctx.i18n.t("Client.sentVideoSizeMsg", {
+          videoSize: `${fileSizeInMegabytes.toFixed(2)} MB`,
+        }),
+        Markup.inlineKeyboard([
+          [
+            Markup.button.callback(ctx.i18n.t("Admin.yesBtn"), "yes"),
+            Markup.button.callback(ctx.i18n.t("Admin.noBtn"), "no"),
+          ],
+          [Markup.button.callback(ctx.i18n.t("Client.backOneStepMsg"), `back`)],
+        ])
       );
-      await ctx.reply(ctx.i18n.t("Client.finalRespondMsgForValidation"));
-      // Handle the video as needed
-      const user = await getUser(String(ctx.chat.id));
-      const today = new Intl.DateTimeFormat(ctx.i18n.locale(), {
-        minute: "2-digit",
-        hour: "2-digit",
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      }).format(new Date());
-      const caption = ctx.i18n.t("Client.bestWorkCaption", {
-        phoneNumber: user.phoneNumber,
-        date: today,
-      });
-      // const uplodedVideoUrl = await uploadVideo(href, fileId);
-      const admins = await GetAllAdminUsers();
-      const processedAdmins = new Set();
-
-      for (const admin of admins) {
-        if (!processedAdmins.has(admin.chatID)) {
-          try {
-            await ctx.telegram.sendVideo(
-              parseInt(admin.chatID),
-              video.file_id,
-              {
-                caption,
-              }
-            );
-            processedAdmins.add(admin.chatID);
-            // console.log(`Message sent to ${operator.name}`);
-          } catch (error) {
-            console.error(`Error sending message to admin: ${error.message}`);
-          }
-        }
-
-        // Introduce a delay (e.g., 3 seconds) before sending to the next admin
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-      }
+      return ctx.wizard.next();
     }
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+sendVideo.on(["photo", "document", "message"], async (ctx) => {
+  try {
+    await ctx.reply(ctx.i18n.t("Client.sendOnlyVideosMsg"));
+    return;
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+const confirmVideoStep = new Composer();
+confirmVideoStep.action("back", async (ctx) => {
+  try {
+    await ctx.editMessageText(
+      ctx.i18n.t("Client.sendVideoMsg"),
+      Markup.inlineKeyboard([
+        [
+          Markup.button.callback(
+            ctx.i18n.t("Client.cancelApplicationBtn"),
+            `cancel`
+          ),
+        ],
+      ])
+    );
+    return ctx.wizard.back();
+  } catch (error) {
+    console.log(error);
+  }
+});
+confirmVideoStep.action("yes", async (ctx) => {
+  try {
+    const mainMenu = generatePromotionButtons(ctx);
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+    await ctx.reply(ctx.i18n.t("Client.workConfirmationMsgToUser"), mainMenu);
+    // Handle the video as needed
+    const user = await getUser(String(ctx.chat.id));
+    const bestWork = await CreateBestWork(user?.chatID, user?.id);
+    const client = await GetClietByUser(user.id);
+
+    const clientLocation = client ? client.location : "❌";
+    const today = new Intl.DateTimeFormat(ctx.i18n.locale(), {
+      minute: "2-digit",
+      hour: "2-digit",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      timeZone: "Asia/Tashkent",
+    }).format(new Date());
+    const caption = ctx.i18n.t("Client.bestWorkCaption", {
+      workId: bestWork.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
+      date: today,
+      clientLocation,
+    });
+
+    // const uplodedVideoUrl = await uploadVideo(href, fileId);
+    const admins = await GetAllAdminUsers();
+    const processedAdmins = new Set();
+
+    for (const admin of admins) {
+      if (!processedAdmins.has(admin.chatID)) {
+        try {
+          await ctx.telegram.sendVideo(
+            parseInt(admin.chatID),
+            ctx.wizard.state.bestwork.video.file_id,
+            {
+              caption,
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: ctx.i18n.t("AdminOrderForm.confirmBtn"),
+                      callback_data: `confirm_w_${bestWork?.id}`,
+                    },
+                  ],
+                ],
+              },
+            }
+          );
+          processedAdmins.add(admin.chatID);
+          // console.log(`Message sent to ${operator.name}`);
+        } catch (error) {
+          console.error(`Error sending message to admin: ${error.message}`);
+        }
+      }
+
+      // Introduce a delay (e.g., 3 seconds) before sending to the next admin
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
+confirmVideoStep.action("no", async (ctx) => {
+  try {
+    await ctx.editMessageText(ctx.i18n.t("Client.applicationCanceledMsg"));
+    return ctx.scene.leave();
   } catch (error) {
     console.log(error);
   }
@@ -104,5 +187,6 @@ sendVideo.on("video", async (ctx) => {
 module.exports = new Scenes.WizardScene(
   "BestWorkPromotionWizard",
   initScene,
-  sendVideo
+  sendVideo,
+  confirmVideoStep
 );

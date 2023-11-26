@@ -32,16 +32,16 @@ setlanguage.action(["lang_uz", "lang_ru"], async (ctx) => {
     } else if (callback_data === "lang_ru") {
       ctx.wizard.state.userData.pLang = "ru";
       ctx.i18n.locale("ru");
-    } else if (callback_data !== "lang_uz" && callback_data !== "lang_ru")
-      return ctx.scene.leave();
+    }
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await ctx.reply(
-      ctx.i18n.t("enterPhoneNumber"),
+      ctx.i18n.t("enterNameMsg"),
       Markup.keyboard([
-        [Markup.button.contactRequest(ctx.i18n.t("Client.sendPhoneNumberMsg"))],
-        [Markup.button.text(ctx.i18n.t("Client.cancelRegistrationBtn"))],
-      ])
-        .oneTime()
-        .resize()
+        [
+          Markup.button.text(ctx.i18n.t("Client.backOneStepMsg")),
+          Markup.button.text(ctx.i18n.t("Client.cancelRegistrationBtn")),
+        ],
+      ]).resize()
     );
     return ctx.wizard.next();
   } catch (e) {
@@ -49,7 +49,81 @@ setlanguage.action(["lang_uz", "lang_ru"], async (ctx) => {
   }
 });
 
+const getNameStep = new Composer();
+getNameStep.hears(match("Client.backOneStepMsg"), async (ctx) => {
+  try {
+    const greeting = {
+      text: "Iltimos, tilni tanlang!\nПожалуйста, выберите язык!",
+      langButtons: [
+        [
+          { text: "O'zbek", callback_data: "lang_uz" },
+          { text: "Russian", callback_data: "lang_ru" },
+        ],
+      ],
+    };
+    await ctx.reply(greeting.text, Markup.inlineKeyboard(greeting.langButtons));
+    return ctx.wizard.back();
+  } catch (error) {
+    console.log(error);
+  }
+});
+getNameStep.on("message", async (ctx) => {
+  try {
+    ctx.wizard.state.userData.firstName = ctx.message.text;
+    await ctx.reply(ctx.i18n.t("enterSecondNameMsg"));
+    return ctx.wizard.next();
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+const getSecondNameStep = new Composer();
+getSecondNameStep.hears(match("Client.backOneStepMsg"), async (ctx) => {
+  try {
+    await ctx.reply(
+      ctx.i18n.t("enterNameMsg"),
+      Markup.keyboard([
+        [
+          Markup.button.text(ctx.i18n.t("Client.backOneStepMsg")),
+          Markup.button.text(ctx.i18n.t("Client.cancelRegistrationBtn")),
+        ],
+      ])
+    );
+    return ctx.wizard.back();
+  } catch (error) {
+    console.log(error);
+  }
+});
+getSecondNameStep.on("message", async (ctx) => {
+  try {
+    ctx.wizard.state.userData.lastName = ctx.message.text;
+    await ctx.replyWithHTML(
+      ctx.i18n.t("enterPhoneNumber"),
+      Markup.keyboard([
+        [Markup.button.contactRequest(ctx.i18n.t("Client.sendPhoneNumberMsg"))],
+        [
+          Markup.button.text(ctx.i18n.t("Client.backOneStepMsg")),
+          Markup.button.text(ctx.i18n.t("Client.cancelRegistrationBtn")),
+        ],
+      ])
+        .oneTime()
+        .resize()
+    );
+    return ctx.wizard.next();
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 const getPhoneNumber = new Composer();
+getPhoneNumber.hears(match("Client.backOneStepMsg"), async (ctx) => {
+  try {
+    await ctx.reply(ctx.i18n.t("enterSecondNameMsg"));
+    return ctx.wizard.back();
+  } catch (error) {
+    console.log(error);
+  }
+});
 getPhoneNumber.hears(match("Client.cancelRegistrationBtn"), async (ctx) => {
   try {
     await ctx.reply(
@@ -77,7 +151,6 @@ getPhoneNumber.on("message", async (ctx) => {
       const phoneRegex = /^\d{12}$/;
       const repeatingDigitsRegex = /(\d)\1{9,}/;
       const phoneNumber = ctx.message.text.replace(/\s+|\+|\D/g, "");
-      console.log(repeatingDigitsRegex.test(parseInt(phoneNumber)));
 
       if (
         !phoneRegex.test(parseInt(phoneNumber)) ||
@@ -109,6 +182,8 @@ getPhoneNumber.on("message", async (ctx) => {
     });
     ctx.wizard.state.userData.otpCode = parseInt(otpCode);
     ctx.wizard.state.userData.userAttempts = 0;
+
+    console.log(ctx.wizard.state.userData.otpCode);
 
     // Send Otp Code as SMS
     await sendOtpSMSCode(
@@ -213,6 +288,8 @@ checkPhoneNumber.on("message", async (ctx) => {
 module.exports = new Scenes.WizardScene(
   "InitialForm",
   setlanguage,
+  getNameStep,
+  getSecondNameStep,
   getPhoneNumber,
   checkPhoneNumber
 );

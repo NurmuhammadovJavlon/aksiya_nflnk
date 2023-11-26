@@ -30,6 +30,8 @@ require("./admins/products/manage.hears");
 // Orders
 require("./admins/orders/panel.hears");
 require("./admins/orders/manage.hears");
+require("./admins/orders/status.hears");
+require("./admins/orders/manageByDealer.hears");
 
 // Clients
 require("./admins/clients/panel.hears");
@@ -39,11 +41,15 @@ require("./admins/clients/manage.hears");
 require("./admins/operators/panel.hears");
 require("./admins/operators/add.hears");
 require("./admins/operators/manage.hears");
+require("./admins/operators/operatorPanel.hears");
 
 // Infos (Admin)
 require("./admins/infos/companyInfo.hears");
 require("./admins/infos/contactInfo.hears");
 require("./admins/infos/scoreInfo.hears");
+require("./admins/infos/panel.hears");
+require("./admins/infos/firstEventInfo.hears");
+require("./admins/infos/bestworkInfo.hears");
 
 // Infos (Clients)
 require("./clients/infos/companyInfo.hears");
@@ -54,3 +60,8 @@ require("./clients/myscore.hears");
 
 // Complain
 require("./clients/complain.hears");
+
+// Users
+require("./admins/users/manage.hears");
+require("./admins/users/getInfo.hears");
+require("./admins/users/register.hears");

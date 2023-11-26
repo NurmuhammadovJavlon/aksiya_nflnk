@@ -26,3 +26,14 @@ exports.CreateClientBeforeValid = async (
 };
 
 // GET
+exports.GetClietByUser = async (userId) => {
+  try {
+    const client = await Client.findOne({
+      where: { userId },
+      raw: true,
+    });
+    return client;
+  } catch (error) {
+    console.log(error);
+  }
+};

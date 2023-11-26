@@ -24,7 +24,7 @@ startStep.hears(match("AdminDealerForm.manageDealersBtn"), async (ctx) => {
     ctx.wizard.state.dealerData = {};
     ctx.wizard.state.dealerData.dealer = {};
     ctx.wizard.state.dealerData.dealer.regionPage = 1;
-    ctx.wizard.state.dealerData.dealer.itemsPerPage = 6;
+    ctx.wizard.state.dealerData.dealer.itemsPerPage = 30;
 
     const dealers = await GetDealersWithPagination(
       ctx.wizard.state.dealerData.dealer.regionPage,
@@ -108,20 +108,12 @@ startStep.action(/i_(\d+)/, async (ctx) => {
     const dealer_caption = ctx.i18n.t("AdminDealerForm.dealerUpdateCaption", {
       dealerName,
     });
-    const isArchived = dealer.isArchived;
 
+    ctx.wizard.state.dealerData.dealer.data = dealer;
     ctx.wizard.state.dealerData.dealer.id = dealerId;
     ctx.wizard.state.dealerData.dealer.keyboard = Markup.inlineKeyboard([
       [Markup.button.callback(ctx.i18n.t("Admin.deleteBtn"), "delete")],
       [Markup.button.callback(ctx.i18n.t("Admin.editBtn"), "edit")],
-      [
-        isArchived
-          ? Markup.button.callback(
-              ctx.i18n.t("Admin.unarchiveBtn"),
-              "unarchive"
-            )
-          : Markup.button.callback(ctx.i18n.t("Admin.archiveBtn"), "archive"),
-      ],
       [Markup.button.callback(ctx.i18n.t("Client.backOneStepMsg"), "back")],
     ]);
 
@@ -258,8 +250,10 @@ manageStep.action("edit", async (ctx) => {
   try {
     ctx.wizard.state.dealerData.dealer.form = {};
     ctx.wizard.state.dealerData.dealer.form.keyboard = Markup.keyboard([
-      // [Markup.button.text(ctx.i18n.t("Client.backOneStepMsg"))],
-      [Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn"))],
+      [
+        Markup.button.callback(ctx.i18n.t("skipBtn")),
+        Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn")),
+      ],
     ]).resize();
     await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await ctx.reply(
@@ -273,6 +267,17 @@ manageStep.action("edit", async (ctx) => {
 });
 
 const getUzbekNameStep = new Composer();
+getUzbekNameStep.hears(match("skipBtn"), async (ctx) => {
+  try {
+    ctx.wizard.state.dealerData.dealer.form.name_uz =
+      ctx.wizard.state.dealerData.dealer.data.name_uz;
+    await ctx.reply(ctx.i18n.t("AdminDealerForm.enterDealerRuName"));
+
+    return ctx.wizard.next();
+  } catch (error) {
+    console.log(error);
+  }
+});
 getUzbekNameStep.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
   try {
     await ctx.reply(
@@ -285,18 +290,10 @@ getUzbekNameStep.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
     const dealer_caption = ctx.i18n.t("AdminDealerForm.dealerUpdateCaption", {
       dealerName,
     });
-    const isArchived = dealer.isArchived;
+
     ctx.wizard.state.dealerData.dealer.keyboard = Markup.inlineKeyboard([
       [Markup.button.callback(ctx.i18n.t("Admin.deleteBtn"), "delete")],
       [Markup.button.callback(ctx.i18n.t("Admin.editBtn"), "edit")],
-      [
-        isArchived
-          ? Markup.button.callback(
-              ctx.i18n.t("Admin.unarchiveBtn"),
-              "unarchive"
-            )
-          : Markup.button.callback(ctx.i18n.t("Admin.archiveBtn"), "archive"),
-      ],
       [Markup.button.callback(ctx.i18n.t("Client.backOneStepMsg"), "back")],
     ]);
 
@@ -313,7 +310,7 @@ getUzbekNameStep.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
 getUzbekNameStep.on("message", async (ctx) => {
   try {
     ctx.wizard.state.dealerData.dealer.form.name_uz = ctx.message.text;
-    await ctx.reply(ctx.i18n.t("AdminDealerForm.enterDealerUzName"));
+    await ctx.reply(ctx.i18n.t("AdminDealerForm.enterDealerRuName"));
     return ctx.wizard.next();
   } catch (error) {
     console.log(error);
@@ -321,6 +318,30 @@ getUzbekNameStep.on("message", async (ctx) => {
 });
 
 const getRussianNameStep = new Composer();
+getRussianNameStep.hears(match("skipBtn"), async (ctx) => {
+  try {
+    ctx.wizard.state.dealerData.dealer.form.name_ru =
+      ctx.wizard.state.dealerData.dealer.data.name_ru;
+
+    const confirmationMsg = {
+      text: ctx.i18n.t("AdminDealerForm.confirmationMessage", {
+        name_uz: ctx.wizard.state.dealerData.dealer.form.name_uz,
+        name_ru: ctx.wizard.state.dealerData.dealer.form.name_ru,
+      }),
+      buttons: Markup.inlineKeyboard([
+        [
+          Markup.button.callback(ctx.i18n.t("Admin.yesBtn"), "yes"),
+          Markup.button.callback(ctx.i18n.t("Admin.noBtn"), "no"),
+        ],
+      ]),
+    };
+
+    await ctx.reply(confirmationMsg.text, confirmationMsg.buttons);
+    return ctx.wizard.next();
+  } catch (error) {
+    console.log(error);
+  }
+});
 getRussianNameStep.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
   try {
     await ctx.reply(
@@ -362,88 +383,6 @@ getRussianNameStep.on("message", async (ctx) => {
   try {
     ctx.wizard.state.dealerData.dealer.form.name_ru = ctx.message.text;
     ctx.wizard.state.dealerData.dealer.form.region = {};
-    ctx.wizard.state.dealerData.dealer.form.region.regionPage = 1;
-    ctx.wizard.state.dealerData.dealer.form.region.itemsPerPage = 2;
-
-    const regions = await getRegionsWithPagination(
-      ctx.wizard.state.dealerData.dealer.form.region.regionPage,
-      ctx.wizard.state.dealerData.dealer.form.region.itemsPerPage
-    );
-
-    if (regions.totalItems === 0) {
-      await ctx.reply(ctx.i18n.t("Client.emptyDataMsg"));
-      return;
-    }
-
-    const keyboard = generateItemsKeyboard(
-      ctx.wizard.state.dealerData.dealer.form.region.regionPage,
-      ctx.i18n.locale(),
-      regions.totalItems,
-      ctx.wizard.state.dealerData.dealer.form.region.itemsPerPage,
-      regions.items,
-      ctx.i18n
-    );
-    // await ctx.deleteMessage(ctx.update.message.message_id);
-    await ctx.reply(ctx.i18n.t("AdminDealerForm.chooseDealerTxt"), keyboard);
-    return ctx.wizard.next();
-  } catch (error) {
-    console.log(error);
-  }
-});
-
-const connectRegionStep = new Composer();
-connectRegionStep.action(["prev", "next"], async (ctx) => {
-  try {
-    const match = ctx.update?.callback_query?.data;
-    switch (match) {
-      case "prev":
-        ctx.wizard.state.dealerData.dealer.form.region.regionPage--;
-        break;
-      case "next":
-        ctx.wizard.state.dealerData.dealer.form.region.regionPage++;
-        break;
-    }
-    const regions = await getRegionsWithPagination(
-      ctx.wizard.state.dealerData.dealer.form.region.regionPage,
-      ctx.wizard.state.dealerData.dealer.form.region.itemsPerPage
-    );
-    const keyboard = generateItemsKeyboard(
-      ctx.wizard.state.dealerData.dealer.form.region.regionPage,
-      ctx.i18n.locale(),
-      regions.totalItems,
-      ctx.wizard.state.dealerData.dealer.form.region.itemsPerPage,
-      regions.items,
-      ctx.i18n
-    );
-    await ctx.editMessageText(
-      ctx.i18n.t("AdminRegionForm.chooseRegionTxt"),
-      keyboard
-    );
-    return;
-  } catch (error) {
-    console.log(error);
-  }
-});
-connectRegionStep.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
-  try {
-    const MainMenu = await generateDealerAdminKeys(ctx);
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-    await ctx.reply(ctx.i18n.t("Client.successfullyCancelledMsg"), MainMenu);
-    return ctx.scene.leave();
-  } catch (error) {
-    console.log(error);
-  }
-});
-connectRegionStep.action(/i_(\d+)/, async (ctx) => {
-  try {
-    if (!ctx.update.callback_query?.data.includes("i_")) {
-      return ctx.reply("invalid_callback_query");
-    }
-    const regionId = parseInt(
-      ctx.update.callback_query?.data.match(/i_(\d+)/)[1],
-      10
-    );
-    ctx.wizard.state.dealerData.dealer.form.regionId = regionId;
     const confirmationMsg = {
       text: ctx.i18n.t("AdminDealerForm.confirmationMessage", {
         name_uz: ctx.wizard.state.dealerData.dealer.form.name_uz,
@@ -456,7 +395,6 @@ connectRegionStep.action(/i_(\d+)/, async (ctx) => {
         ],
       ]),
     };
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await ctx.reply(confirmationMsg.text, confirmationMsg.buttons);
     return ctx.wizard.next();
   } catch (error) {
@@ -508,51 +446,19 @@ editConfirmationStep.hears(
 editConfirmationStep.action(["yes", "no"], async (ctx) => {
   try {
     const callbackData = ctx.update.callback_query.data;
+    const MainMenu = await generateDealerAdminKeys(ctx);
     if (callbackData === "yes") {
       await UpdateDealer(
         ctx.wizard.state.dealerData.dealer.id,
         ctx.wizard.state.dealerData.dealer.form.name_uz,
-        ctx.wizard.state.dealerData.dealer.form.name_ru,
-        ctx.wizard.state.dealerData.dealer.form.regionId
+        ctx.wizard.state.dealerData.dealer.form.name_ru
       );
       await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-      ctx.reply(
-        ctx.i18n.t("AdminDealerForm.regionSavedText"),
-        Markup.removeKeyboard()
-      );
+      ctx.reply(ctx.i18n.t("AdminDealerForm.regionSavedText"), MainMenu);
     } else if (callbackData === "no") {
       await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-      ctx.reply(
-        ctx.i18n.t("AdminRegionForm.editingCanceledMsg"),
-        Markup.removeKeyboard()
-      );
+      ctx.reply(ctx.i18n.t("AdminRegionForm.editingCanceledMsg"), MainMenu);
     }
-
-    const dealer = await GetDealerById(ctx.wizard.state.dealerData.dealer.id);
-    const dealerName =
-      ctx.i18n.locale() === "uz" ? dealer.name_uz : dealer.name_ru;
-    const dealer_caption = ctx.i18n.t("AdminDealerForm.dealerUpdateCaption", {
-      dealerName,
-    });
-    const isArchived = dealer.isArchived;
-    ctx.wizard.state.dealerData.dealer.keyboard = Markup.inlineKeyboard([
-      [Markup.button.callback(ctx.i18n.t("Admin.deleteBtn"), "delete")],
-      [Markup.button.callback(ctx.i18n.t("Admin.editBtn"), "edit")],
-      [
-        isArchived
-          ? Markup.button.callback(
-              ctx.i18n.t("Admin.unarchiveBtn"),
-              "unarchive"
-            )
-          : Markup.button.callback(ctx.i18n.t("Admin.archiveBtn"), "archive"),
-      ],
-      [Markup.button.callback(ctx.i18n.t("Client.backOneStepMsg"), "back")],
-    ]);
-    await ctx.replyWithHTML(
-      dealer_caption,
-      ctx.wizard.state.dealerData.dealer.keyboard
-    );
-
     return ctx.wizard.selectStep(1);
   } catch (error) {
     console.log(error);
@@ -565,6 +471,5 @@ module.exports = new Scenes.WizardScene(
   manageStep,
   getUzbekNameStep,
   getRussianNameStep,
-  connectRegionStep,
   editConfirmationStep
 );

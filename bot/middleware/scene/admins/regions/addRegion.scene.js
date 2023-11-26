@@ -11,7 +11,6 @@ initScene.on("message", async (ctx) => {
   try {
     ctx.wizard.state.regionData = {};
     ctx.wizard.state.regionData.keyboard = Markup.keyboard([
-      // [Markup.button.text(ctx.i18n.t("Client.backOneStepMsg"))],
       [Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn"))],
     ]).resize();
     await ctx.reply(
@@ -39,7 +38,14 @@ getUzRegionName.on("message", async (ctx) => {
     ctx.wizard.state.regionData = {};
     const regionName = ctx.update.message.text;
     ctx.wizard.state.regionData.name_uz = regionName;
-    await ctx.reply(ctx.i18n.t("AdminRegionForm.enterRegionNameRuText"));
+    ctx.wizard.state.regionData.keyboard = Markup.keyboard([
+      [Markup.button.text(ctx.i18n.t("Client.backOneStepMsg"))],
+      [Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn"))],
+    ]);
+    await ctx.reply(
+      ctx.i18n.t("AdminRegionForm.enterRegionNameRuText"),
+      ctx.wizard.state.regionData.keyboard
+    );
     return ctx.wizard.next();
   } catch (e) {
     console.log(e);
@@ -47,6 +53,20 @@ getUzRegionName.on("message", async (ctx) => {
 });
 
 const getRuRegionName = new Composer();
+getRuRegionName.hears(match("Client.backOneStepMsg"), async (ctx) => {
+  try {
+    ctx.wizard.state.regionData.keyboard = Markup.keyboard([
+      [Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn"))],
+    ]).resize();
+    await ctx.reply(
+      ctx.i18n.t("AdminRegionForm.enterRegionNameUzText"),
+      ctx.wizard.state.regionData.keyboard
+    );
+    return ctx.wizard.back();
+  } catch (error) {
+    console.log(error);
+  }
+});
 getRuRegionName.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
   try {
     const MainMenu = await generateRegionAdminKeys(ctx);
@@ -60,6 +80,43 @@ getRuRegionName.on("message", async (ctx) => {
   try {
     const regionName = ctx.update.message.text;
     ctx.wizard.state.regionData.name_ru = regionName;
+    const confirmMsg = {
+      text: ctx.i18n.t("AdminRegionForm.editConfirmationMsg", {
+        regionNameUz: ctx.wizard.state.regionData.name_uz,
+        regionNameRu: ctx.wizard.state.regionData.name_ru,
+      }),
+      buttons: Markup.inlineKeyboard([
+        [
+          Markup.button.callback(ctx.i18n.t("Admin.yesBtn"), "yes"),
+          Markup.button.callback(ctx.i18n.t("Admin.noBtn"), "no"),
+        ],
+      ]),
+    };
+    await ctx.reply(confirmMsg.text, confirmMsg.buttons);
+    return ctx.wizard.next();
+  } catch (e) {
+    console.log(e);
+  }
+});
+
+const confirmationStep = new Composer();
+confirmationStep.hears(match("Client.backOneStepMsg"), async (ctx) => {
+  try {
+    ctx.wizard.state.regionData.keyboard = Markup.keyboard([
+      [Markup.button.text(ctx.i18n.t("Client.backOneStepMsg"))],
+      [Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn"))],
+    ]);
+    await ctx.reply(
+      ctx.i18n.t("AdminRegionForm.enterRegionNameRuText"),
+      ctx.wizard.state.regionData.keyboard
+    );
+    return ctx.wizard.back();
+  } catch (error) {
+    console.log(error);
+  }
+});
+confirmationStep.action("yes", async (ctx) => {
+  try {
     await CreateRegion(
       ctx.wizard.state.regionData.name_uz,
       ctx.wizard.state.regionData.name_ru
@@ -68,8 +125,18 @@ getRuRegionName.on("message", async (ctx) => {
     const keyboard = await generateRegionAdminKeys(ctx);
     ctx.reply(ctx.i18n.t("AdminRegionForm.regionSavedText"), keyboard);
     return ctx.scene.leave();
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
+  }
+});
+confirmationStep.action("no", async (ctx) => {
+  try {
+    const MainMenu = await generateRegionAdminKeys(ctx);
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+    await ctx.reply(ctx.i18n.t("Client.successfullyCancelledMsg"), MainMenu);
+    return ctx.scene.leave();
+  } catch (error) {
+    console.log(error);
   }
 });
 
@@ -77,5 +144,6 @@ module.exports = new Scenes.WizardScene(
   "AddRegionWizard",
   initScene,
   getUzRegionName,
-  getRuRegionName
+  getRuRegionName,
+  confirmationStep
 );

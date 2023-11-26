@@ -2,7 +2,7 @@ const bot = require("../../connection/token.connection");
 const Order = require("../../model/order.model");
 const User = require("../../model/user.model");
 
-module.exports = bot.on("callback_query", async (ctx) => {
+module.exports = bot.action(/confirm_purchase_(\d+)/, async (ctx) => {
   try {
     const orderId = parseInt(
       ctx.callbackQuery.data.match(/confirm_purchase_(\d+)/)[1]
@@ -21,7 +21,7 @@ module.exports = bot.on("callback_query", async (ctx) => {
 
     if (order.status !== "FINISHED") {
       await Order.update(
-        { status: "FINISHED" },
+        { status: "FINISHED", isValidated: true },
         {
           where: {
             id: orderId,
@@ -57,9 +57,11 @@ module.exports = bot.on("callback_query", async (ctx) => {
           score: finalScore,
         })
       );
+      return;
     }
 
-    ctx.answerCbQuery("It is finished", true);
+    await ctx.deleteMessage(ctx.update?.callback_query?.message?.message_id);
+    await ctx.reply(ctx.i18n.t("Client.purchaseIsConfirmedMsg"));
   } catch (error) {
     console.log(error);
   }

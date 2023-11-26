@@ -1,7 +1,7 @@
 const { Markup, Scenes, Composer } = require("telegraf");
 const { match } = require("telegraf-i18n");
 const CompanyInfo = require("../../../../model/companyInfo.model");
-const generateAdminKeys = require("../../../../functions/keyboards/admin.keyboard");
+const generateTextsAdminKeys = require("../../../../functions/keyboards/admins/texts.keyboard");
 
 const getCompanyInfo = async () => {
   try {
@@ -16,7 +16,7 @@ const getCompanyInfo = async () => {
 const LeaveScene = async (ctx) => {
   const AdminMenu = {
     text: ctx.i18n.t("choosePromotion"),
-    buttons: await generateAdminKeys(ctx),
+    buttons: await generateTextsAdminKeys(ctx),
   };
   await ctx.reply(AdminMenu.text, AdminMenu.buttons);
 };
@@ -136,7 +136,7 @@ const confirmStep = new Composer();
 confirmStep.action(["yes", "no"], async (ctx) => {
   try {
     const callBackData = ctx.update.callback_query.data;
-    const AdminMenu = await generateAdminKeys(ctx);
+    const AdminMenu = await generateTextsAdminKeys(ctx);
     if (callBackData === "yes") {
       if (ctx.wizard.state.companyInfo.method === "CREATE") {
         await CompanyInfo.create({

@@ -2,6 +2,7 @@ const { CheckAdmin } = require("../../common/sequelize/user.sequelize");
 const { Markup } = require("telegraf");
 const Client = require("../../model/client.model");
 const User = require("../../model/user.model");
+const { CheckOperator } = require("../../common/sequelize/operator.sequelize");
 
 async function generateMainMenuKeys(ctx) {
   try {
@@ -39,6 +40,13 @@ async function generateMainMenuKeys(ctx) {
     }
 
     const admin = await CheckAdmin(String(ctx.chat.id));
+    const operator = await CheckOperator(String(ctx.chat.id));
+
+    if (!admin && operator) {
+      MainKeboard.push([
+        Markup.button.text(ctx.i18n.t("OperatorPanel.operatorPanelBtn")),
+      ]);
+    }
 
     if (admin) {
       MainKeboard.push([Markup.button.text(ctx.i18n.t("adminPanelBtn"))]);

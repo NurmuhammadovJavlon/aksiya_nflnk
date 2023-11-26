@@ -1,6 +1,5 @@
 const bot = require("../../../../connection/token.connection");
 const { match } = require("telegraf-i18n");
-const generateProductAdminKeys = require("../../../../functions/keyboards/admins/product.keyboard");
 const generateOrderAdminKeys = require("../../../../functions/keyboards/admins/order.keyboard");
 
 module.exports = bot.hears(match("Admin.ordersBtn"), async (ctx) => {

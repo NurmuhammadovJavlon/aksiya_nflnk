@@ -87,3 +87,15 @@ exports.GetOperatorById = async (id) => {
     console.log(error);
   }
 };
+
+exports.CheckOperator = async (chatId) => {
+  const foundOperator = await Operator.findOne({
+    where: {
+      chatId,
+    },
+    raw: true,
+  });
+
+  if (foundOperator) return foundOperator;
+  return null;
+};

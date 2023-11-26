@@ -1,5 +1,8 @@
 const Region = require("../../model/region.model");
 
+// For Admin
+// ________________________________________________________________
+
 // POST
 exports.CreateRegion = async (name_uz, name_ru) => {
   try {
@@ -34,19 +37,6 @@ exports.GetRegionByID = async (id) => {
 
     if (!region) return null;
     return region;
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-exports.GetAllRegions = async () => {
-  try {
-    const regions = await Region.findAll({
-      order: [["createdAt", "DESC"]],
-      raw: true,
-    });
-
-    return regions;
   } catch (error) {
     console.log(error);
   }
@@ -125,6 +115,22 @@ exports.UpdateRegionNames = async (name_uz, name_ru, id) => {
       { where: { id }, raw: true }
     );
     return region;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// For Users
+// ________________________________________________________________
+
+exports.GetAllRegions = async () => {
+  try {
+    const regions = await Region.findAll({
+      order: [["createdAt", "DESC"]],
+      raw: true,
+    });
+
+    return regions;
   } catch (error) {
     console.log(error);
   }

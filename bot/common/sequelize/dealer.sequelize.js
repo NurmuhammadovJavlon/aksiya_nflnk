@@ -3,11 +3,9 @@ const Dealer = require("../../model/dealer.model");
 const Region = require("../../model/region.model");
 
 // POST
-exports.CreateDealer = async (name_uz, name_ru, regionId) => {
+exports.CreateDealer = async (name_uz, name_ru) => {
   try {
-    const dealer = await Dealer.create({ name_uz, name_ru, regionId });
-    // const region = await Region.findOne({ where: { id: regionId } });
-    // dealer.setRegion(region);
+    const dealer = await Dealer.create({ name_uz, name_ru });
     return dealer.get({ plain: true });
   } catch (error) {
     console.log(error);
@@ -36,12 +34,9 @@ exports.ArchiveDealer = async (id, isArchived) => {
   }
 };
 
-exports.UpdateDealer = async (id, name_uz, name_ru, regionId) => {
+exports.UpdateDealer = async (id, name_uz, name_ru) => {
   try {
-    const dealer = await Dealer.update(
-      { name_uz, name_ru, regionId },
-      { where: { id } }
-    );
+    const dealer = await Dealer.update({ name_uz, name_ru }, { where: { id } });
     return dealer;
   } catch (error) {
     console.log(error);

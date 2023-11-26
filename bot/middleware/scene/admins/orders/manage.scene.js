@@ -12,6 +12,8 @@ const {
   DeleteOrder,
   ConfirmOrder,
 } = require("../../../../common/sequelize/order.sequelize");
+const { getUser } = require("../../../../common/sequelize/user.sequelize");
+const User = require("../../../../model/user.model");
 
 const sendOrdersKeys = async (ctx, dealerId) => {
   try {
@@ -74,28 +76,18 @@ const sendOrdersKeys = async (ctx, dealerId) => {
   }
 };
 
-const sendDealerKeys = async (ctx) => {
+const increaseUserScore = async (order) => {
   try {
-    const dealers = await GetDealersWithPagination(
-      ctx.wizard.state.order.dealer.dealerPage,
-      ctx.wizard.state.order.dealer.itemsPerPage
-    );
+    const user = await getUser(order.clientChatID);
+    const currentScore = parseFloat(user?.score);
+    const newScore = (order?.amount * 1) / 100000000;
+    const finalScore = parseFloat((currentScore + newScore).toFixed(5));
 
-    if (dealers.totalItems === 0) {
-      await ctx.reply(ctx.i18n.t("Client.emptyDataMsg"));
-      return;
-    }
-
-    const keyboard = generateItemsKeyboard(
-      ctx.wizard.state.order.dealer.dealerPage,
-      ctx.i18n.locale(),
-      dealers.totalItems,
-      ctx.wizard.state.order.dealer.itemsPerPage,
-      dealers.items,
-      ctx.i18n
+    await User.update(
+      { score: finalScore },
+      { where: { chatID: order.clientChatID } }
     );
-    // await ctx.deleteMessage(ctx.update.message.message_id);
-    await ctx.reply(ctx.i18n.t("AdminDealerForm.chooseDealerTxt"), keyboard);
+    return finalScore;
   } catch (error) {
     console.log(error);
   }
@@ -107,77 +99,16 @@ startStep.hears(
   async (ctx) => {
     try {
       ctx.wizard.state.order = {};
-      ctx.wizard.state.order.dealer = {};
-      ctx.wizard.state.order.dealer.dealerPage = 1;
-      ctx.wizard.state.order.dealer.itemsPerPage = 2;
-      await sendDealerKeys(ctx);
+      ctx.wizard.state.order.orderPage = 1;
+      ctx.wizard.state.order.itemsPerPage = 30;
+
+      await sendOrdersKeys(ctx);
+      return ctx.wizard.next();
     } catch (e) {
       console.log(e);
     }
   }
 );
-startStep.action("cancel", async (ctx) => {
-  try {
-    const MainMenu = await generateOrderAdminKeys(ctx);
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-    await ctx.reply(ctx.i18n.t("Client.successfullyCancelledMsg"), MainMenu);
-    return ctx.scene.leave();
-  } catch (error) {
-    console.log(error);
-  }
-});
-startStep.action(["prev", "next"], async (ctx) => {
-  try {
-    const match = ctx.update?.callback_query?.data;
-    switch (match) {
-      case "prev":
-        ctx.wizard.state.order.dealer.dealerPage--;
-        break;
-      case "next":
-        ctx.wizard.state.order.dealer.dealerPage++;
-        break;
-    }
-    const dealers = await GetDealersWithPagination(
-      ctx.wizard.state.order.dealer.dealerPage,
-      ctx.wizard.state.order.dealer.itemsPerPage
-    );
-
-    const keyboard = generateItemsKeyboard(
-      ctx.wizard.state.order.dealer.dealerPage,
-      ctx.i18n.locale(),
-      dealers.totalItems,
-      ctx.wizard.state.order.dealer.itemsPerPage,
-      dealers.items,
-      ctx.i18n
-    );
-    await ctx.editMessageText(
-      ctx.i18n.t("AdminDealerForm.chooseDealerTxt"),
-      keyboard
-    );
-  } catch (error) {
-    console.log(error);
-  }
-});
-startStep.on("callback_query", async (ctx) => {
-  try {
-    if (!ctx.update.callback_query?.data.includes("i_")) {
-      return ctx.reply("invalid_callback_query");
-    }
-    const dealerId = parseInt(
-      ctx.update.callback_query?.data.match(/i_(\d+)/)[1],
-      10
-    );
-    ctx.wizard.state.order.orderPage = 1;
-    ctx.wizard.state.order.itemsPerPage = 2;
-    ctx.wizard.state.order.dealer.id = dealerId;
-
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-    await sendOrdersKeys(ctx);
-    return ctx.wizard.next();
-  } catch (error) {
-    console.log(error);
-  }
-});
 
 const sendOrdersStep = new Composer();
 sendOrdersStep.action("cancel", async (ctx) => {
@@ -217,16 +148,31 @@ sendOrdersStep.on("callback_query", async (ctx) => {
       10
     );
     const order = await GetOrderById(orderId);
+    ctx.wizard.state.order.data = order;
     const id = order.id;
     const orderAmount = new Intl.NumberFormat(ctx.i18n.locale(), {
       style: "currency",
       currency: "UZS",
     }).format(order.amount);
+    const orderDate = new Intl.DateTimeFormat(ctx.i18n.locale(), {
+      minute: "2-digit",
+      hour: "2-digit",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      timeZone: "Asia/Tashkent",
+    }).format(order?.createdAt);
     const orderConfirm = order.confirm === true ? "✅" : "❌";
+    const user = await getUser(order.clientChatID);
+    ctx.wizard.state.order.user = user;
     const order_caption = ctx.i18n.t("AdminOrderForm.orderUpdateMsg", {
       id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
       amount: orderAmount,
       confirmed: orderConfirm,
+      date: orderDate,
     });
 
     ctx.wizard.state.order.id = orderId;
@@ -250,6 +196,14 @@ sendOrdersStep.on("callback_query", async (ctx) => {
 });
 
 const manageStep = new Composer();
+manageStep.action("back", async (ctx) => {
+  try {
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+    await sendOrdersKeys(ctx);
+  } catch (error) {
+    console.log(error);
+  }
+});
 manageStep.action("cancel", async (ctx) => {
   try {
     const MainMenu = await generateOrderAdminKeys(ctx);
@@ -272,9 +226,22 @@ manageStep.action("delete", async (ctx) => {
 });
 manageStep.action("confirm", async (ctx) => {
   try {
+    const finalScore = await increaseUserScore(ctx.wizard.state.order.data);
+    const confirmationMsg = {
+      uz: `Sizning №${ctx.wizard.state.order.data?.id}-buyurtmangiz operatorlar tomonidan tasdiqlandi hamda sizga ${finalScore} kupon taqdim etildi`,
+      ru: `Ваш номер заказа №${ctx.wizard.state.order.data?.id} подтвержден операторами и вы получили купон ${finalScore}`,
+    };
+    const finalMsg =
+      ctx.wizard.state.order.user.preferedLanguageCode === "uz"
+        ? confirmationMsg.uz
+        : confirmationMsg.ru;
     await ConfirmOrder(ctx.wizard.state.order.id);
     await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await sendOrdersKeys(ctx);
+    await ctx.telegram.sendMessage(
+      ctx.wizard.state.order.data?.clientChatID,
+      finalMsg
+    );
     return ctx.wizard.back();
   } catch (error) {
     console.log(error);

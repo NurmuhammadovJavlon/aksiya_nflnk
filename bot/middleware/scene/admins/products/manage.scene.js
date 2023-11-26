@@ -137,7 +137,7 @@ startStep.hears(match("AdminProductForm.manageProductsBtn"), async (ctx) => {
   try {
     ctx.wizard.state.product = {};
     ctx.wizard.state.product.regionPage = 1;
-    ctx.wizard.state.product.itemsPerPage = 6;
+    ctx.wizard.state.product.itemsPerPage = 30;
     await sendProductKeys(ctx);
   } catch (e) {
     console.log(e);
@@ -185,26 +185,16 @@ startStep.on("callback_query", async (ctx) => {
     const productCaption =
       ctx.i18n.locale() === "uz" ? product.caption_uz : product.caption_ru;
     const productPhoto = product.image;
-    const dealerMsg = await generateDealersText(productId);
     const product_caption = ctx.i18n.t("AdminProductForm.productUpdateMsg", {
       productName,
       desc: productCaption,
-      dealerMsg,
     });
-    const isArchived = product.isArchived;
 
+    ctx.wizard.state.product.data = product;
     ctx.wizard.state.product.id = productId;
     ctx.wizard.state.product.keyboard = [
       [Markup.button.callback(ctx.i18n.t("Admin.deleteBtn"), "delete")],
       [Markup.button.callback(ctx.i18n.t("Admin.editBtn"), "edit")],
-      [
-        isArchived
-          ? Markup.button.callback(
-              ctx.i18n.t("Admin.unarchiveBtn"),
-              "unarchive"
-            )
-          : Markup.button.callback(ctx.i18n.t("Admin.archiveBtn"), "archive"),
-      ],
       [Markup.button.callback(ctx.i18n.t("Client.backOneStepMsg"), "back")],
     ];
 
@@ -241,66 +231,15 @@ manageStep.action("delete", async (ctx) => {
     console.log(error);
   }
 });
-manageStep.action(["archive", "unarchive"], async (ctx) => {
-  try {
-    const callbackData = ctx.update.callback_query.data;
-    let productIsArchived = false;
-    switch (callbackData) {
-      case "archive":
-        productIsArchived = true;
-        break;
-      case "unarchive":
-        productIsArchived = false;
-        break;
-    }
-    const message = productIsArchived
-      ? ctx.i18n.t("AdminProductForm.productIsArchivedMsg")
-      : ctx.i18n.t("AdminProductForm.productIsUnArchivedMsg");
-    await ArchiveProduct(ctx.wizard.state.product.id, productIsArchived);
-    await ctx.answerCbQuery(message);
-
-    // Change Message
-    const product = await GetProductById(ctx.wizard.state.product.id);
-    const productName =
-      ctx.i18n.locale() === "uz" ? product.name_uz : product.name_ru;
-    const productCaption =
-      ctx.i18n.locale() === "uz" ? product.caption_uz : product.caption_ru;
-    const product_caption = ctx.i18n.t("AdminProductForm.productUpdateMsg", {
-      productName,
-      desc: productCaption,
-    });
-    const isArchived = product.isArchived;
-    ctx.wizard.state.product.keyboard = [
-      [Markup.button.callback(ctx.i18n.t("Admin.deleteBtn"), "delete")],
-      [Markup.button.callback(ctx.i18n.t("Admin.editBtn"), "edit")],
-      [
-        isArchived
-          ? Markup.button.callback(
-              ctx.i18n.t("Admin.unarchiveBtn"),
-              "unarchive"
-            )
-          : Markup.button.callback(ctx.i18n.t("Admin.archiveBtn"), "archive"),
-      ],
-      [Markup.button.callback(ctx.i18n.t("Client.backOneStepMsg"), "back")],
-    ];
-
-    // await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-    await ctx.editMessageCaption(product_caption, {
-      reply_markup: {
-        inline_keyboard: ctx.wizard.state.product.keyboard,
-      },
-    });
-    return;
-  } catch (error) {
-    console.log(error);
-  }
-});
 manageStep.action("edit", async (ctx) => {
   try {
     ctx.wizard.state.product.form = {};
     ctx.wizard.state.product.form.keyboard = Markup.keyboard([
       // [Markup.button.text(ctx.i18n.t("Client.backOneStepMsg"))],
-      [Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn"))],
+      [
+        Markup.button.callback(ctx.i18n.t("skipBtn")),
+        Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn")),
+      ],
     ]);
     // await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await ctx.reply(
@@ -314,6 +253,27 @@ manageStep.action("edit", async (ctx) => {
 });
 
 const getUzProductName = new Composer();
+getUzProductName.hears(match("skipBtn"), async (ctx) => {
+  try {
+    ctx.wizard.state.product.form.name_uz =
+      ctx.wizard.state.product.data.name_uz;
+    ctx.wizard.state.product.form.keyboard = Markup.keyboard([
+      [
+        Markup.button.callback(ctx.i18n.t("skipBtn")),
+        Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn")),
+      ],
+      [Markup.button.text(ctx.i18n.t("Client.backOneStepMsg"))],
+    ]);
+
+    await ctx.reply(
+      ctx.i18n.t("AdminProductForm.enterRuProductNameMsg"),
+      ctx.wizard.state.product.form.keyboard
+    );
+    return ctx.wizard.next();
+  } catch (error) {
+    console.log(error);
+  }
+});
 getUzProductName.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
   try {
     await GoBack(ctx);
@@ -325,7 +285,18 @@ getUzProductName.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
 getUzProductName.on("message", async (ctx) => {
   try {
     ctx.wizard.state.product.form.name_uz = ctx.message.text;
-    await ctx.reply(ctx.i18n.t("AdminProductForm.enterRuProductNameMsg"));
+    ctx.wizard.state.product.form.keyboard = Markup.keyboard([
+      [
+        Markup.button.callback(ctx.i18n.t("skipBtn")),
+        Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn")),
+      ],
+      [Markup.button.text(ctx.i18n.t("Client.backOneStepMsg"))],
+    ]);
+
+    await ctx.reply(
+      ctx.i18n.t("AdminProductForm.enterRuProductNameMsg"),
+      ctx.wizard.state.product.form.keyboard
+    );
     return ctx.wizard.next();
   } catch (e) {
     console.log(e);
@@ -333,6 +304,43 @@ getUzProductName.on("message", async (ctx) => {
 });
 
 const getRuProductName = new Composer();
+getRuProductName.hears(match("skipBtn"), async (ctx) => {
+  try {
+    ctx.wizard.state.product.form.name_ru =
+      ctx.wizard.state.product.data.name_ru;
+    const keyboard = Markup.keyboard([
+      [
+        Markup.button.callback(ctx.i18n.t("skipBtn")),
+        Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn")),
+      ],
+      [Markup.button.text(ctx.i18n.t("Client.backOneStepMsg"))],
+    ]);
+
+    await ctx.reply(ctx.i18n.t("AdminProductForm.enterUzProductCaptionMsg"));
+    return ctx.wizard.next();
+  } catch (error) {
+    console.log(error);
+  }
+});
+getRuProductName.hears(match("Client.backOneStepMsg"), async (ctx) => {
+  try {
+    ctx.wizard.state.product.form.keyboard = Markup.keyboard([
+      // [Markup.button.text(ctx.i18n.t("Client.backOneStepMsg"))],
+      [
+        Markup.button.callback(ctx.i18n.t("skipBtn")),
+        Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn")),
+      ],
+    ]);
+
+    await ctx.reply(
+      ctx.i18n.t("AdminProductForm.enterUzProductNameMsg"),
+      ctx.wizard.state.product.form.keyboard
+    );
+    return ctx.wizard.back();
+  } catch (error) {
+    console.log(error);
+  }
+});
 getRuProductName.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
   try {
     await GoBack(ctx);
@@ -352,6 +360,28 @@ getRuProductName.on("message", async (ctx) => {
 });
 
 const getUzCaption = new Composer();
+getUzCaption.hears(match("skipBtn"), async (ctx) => {
+  try {
+    ctx.wizard.state.product.form.caption_uz =
+      ctx.wizard.state.product.data.caption_uz;
+
+    await ctx.reply(ctx.i18n.t("AdminProductForm.enterRuProductCaptionMsg"));
+    return ctx.wizard.next();
+  } catch (error) {
+    console.log(error);
+  }
+});
+getUzCaption.hears(match("Client.backOneStepMsg"), async (ctx) => {
+  try {
+    await ctx.reply(
+      ctx.i18n.t("AdminProductForm.enterRuProductNameMsg"),
+      ctx.wizard.state.product.form.keyboard
+    );
+    return ctx.wizard.back();
+  } catch (error) {
+    console.log(error);
+  }
+});
 getUzCaption.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
   try {
     await GoBack(ctx);
@@ -371,6 +401,28 @@ getUzCaption.on("message", async (ctx) => {
 });
 
 const getRuCaption = new Composer();
+getRuCaption.hears(match("skipBtn"), async (ctx) => {
+  try {
+    ctx.wizard.state.product.form.caption_ru =
+      ctx.wizard.state.product.data.caption_ru;
+
+    await ctx.reply(
+      ctx.i18n.t("AdminProductForm.sendProductPhotoMsg"),
+      ctx.wizard.state.product.form.keyboard
+    );
+    return ctx.wizard.next();
+  } catch (error) {
+    console.log(error);
+  }
+});
+getRuCaption.hears(match("Client.backOneStepMsg"), async (ctx) => {
+  try {
+    await ctx.reply(ctx.i18n.t("AdminProductForm.enterUzProductCaptionMsg"));
+    return ctx.wizard.back();
+  } catch (error) {
+    console.log(error);
+  }
+});
 getRuCaption.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
   try {
     await GoBack(ctx);
@@ -382,95 +434,11 @@ getRuCaption.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
 getRuCaption.on("message", async (ctx) => {
   try {
     ctx.wizard.state.product.form.caption_ru = ctx.update.message.text;
-    ctx.wizard.state.product.form.dealer = {};
-    ctx.wizard.state.product.form.dealer.dealerPage = 1;
-    ctx.wizard.state.product.form.dealer.itemsPerPage = 2;
-    ctx.wizard.state.product.form.dealer.ids = [];
-
-    await sendDealerKeys(ctx);
-    return ctx.wizard.next();
-  } catch (error) {
-    console.log(error);
-  }
-});
-
-const connectDealerStep = new Composer();
-connectDealerStep.action("cancel", async (ctx) => {
-  try {
-    await GoBack(ctx);
-    return ctx.scene.leave();
-  } catch (error) {
-    console.log(error);
-  }
-});
-connectDealerStep.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
-  try {
-    await GoBack(ctx);
-    return ctx.scene.leave();
-  } catch (error) {
-    console.log(error);
-  }
-});
-connectDealerStep.action(["prev", "next"], async (ctx) => {
-  try {
-    const match = ctx.update?.callback_query?.data;
-    switch (match) {
-      case "prev":
-        ctx.wizard.state.product.form.dealer.dealerPage--;
-        break;
-      case "next":
-        ctx.wizard.state.product.form.dealer.dealerPage++;
-        break;
-    }
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-    await sendDealerKeys(ctx);
-    return;
-  } catch (error) {
-    console.log(error);
-  }
-});
-connectDealerStep.action(/i_(\d+)/, async (ctx) => {
-  try {
-    if (!ctx.update.callback_query?.data.includes("i_")) {
-      return ctx.reply("invalid_callback_query");
-    }
-    const dealerId = parseInt(
-      ctx.update.callback_query?.data.match(/i_(\d+)/)[1],
-      10
-    );
-    if (!ctx.wizard.state.product.form.dealer.ids.includes(dealerId)) {
-      ctx.wizard.state.product.form.dealer.ids = [
-        ...ctx.wizard.state.product.form.dealer.ids,
-        dealerId,
-      ];
-    } else if (ctx.wizard.state.product.form.dealer.ids.includes(dealerId)) {
-      ctx.wizard.state.product.form.dealer.ids = [
-        ...ctx.wizard.state.product.form.dealer.ids.filter(
-          (id) => id !== dealerId
-        ),
-      ];
-    }
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-    await sendDealerKeys(ctx);
-    return;
-    // return ctx.wizard.next();
-  } catch (error) {
-    console.log(error);
-  }
-});
-connectDealerStep.action("finish", async (ctx) => {
-  try {
-    const keyboard = Markup.keyboard([
-      [
-        Markup.button.text(ctx.i18n.t("Client.cancelApplicationBtn")),
-        Markup.button.text(ctx.i18n.t("skipBtn")),
-      ],
-    ]);
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await ctx.reply(
       ctx.i18n.t("AdminProductForm.sendProductPhotoMsg"),
-      keyboard
+      ctx.wizard.state.product.form.keyboard
     );
+
     return ctx.wizard.next();
   } catch (error) {
     console.log(error);
@@ -482,6 +450,14 @@ getProductPhotoStep.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
   try {
     await GoBack(ctx);
     return ctx.scene.leave();
+  } catch (error) {
+    console.log(error);
+  }
+});
+getProductPhotoStep.hears(match("Client.backOneStepMsg"), async (ctx) => {
+  try {
+    await ctx.reply(ctx.i18n.t("AdminProductForm.enterRuProductCaptionMsg"));
+    return ctx.wizard.back();
   } catch (error) {
     console.log(error);
   }
@@ -546,6 +522,18 @@ confirmDetailStep.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
     console.log(error);
   }
 });
+confirmDetailStep.hears(match("Client.backOneStepMsg"), async (ctx) => {
+  try {
+    await ctx.reply(
+      ctx.i18n.t("AdminProductForm.sendProductPhotoMsg"),
+      ctx.wizard.state.product.form.keyboard
+    );
+
+    return ctx.wizard.back();
+  } catch (error) {
+    console.log(error);
+  }
+});
 confirmDetailStep.action(["yes", "no"], async (ctx) => {
   try {
     const callBackData = ctx.update.callback_query.data;
@@ -558,8 +546,7 @@ confirmDetailStep.action(["yes", "no"], async (ctx) => {
         ctx.wizard.state.product.form.photo,
         ctx.wizard.state.product.form.photoPublic_id,
         ctx.wizard.state.product.form.caption_uz,
-        ctx.wizard.state.product.form.caption_ru,
-        ctx.wizard.state.product.form.dealer.ids
+        ctx.wizard.state.product.form.caption_ru
       );
       await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
       if (product) {
@@ -585,7 +572,6 @@ module.exports = new Scenes.WizardScene(
   getRuProductName,
   getUzCaption,
   getRuCaption,
-  connectDealerStep,
   getProductPhotoStep,
   confirmDetailStep
 );

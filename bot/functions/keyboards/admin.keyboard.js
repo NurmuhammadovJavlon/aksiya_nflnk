@@ -21,13 +21,10 @@ async function generateAdminKeys(ctx) {
       ],
       [
         Markup.button.text(ctx.i18n.t("Admin.operatorsBtn")),
-        Markup.button.text(ctx.i18n.t("Admin.scoreInfoBtn")),
+        Markup.button.text(ctx.i18n.t("Admin.allTextsBtn")),
+        // Markup.button.text(ctx.i18n.t("Admin.scoreInfoBtn")),
       ],
-      [
-        Markup.button.text(ctx.i18n.t("Admin.companyInfoBtn")),
-        Markup.button.text(ctx.i18n.t("Admin.contactInfoBtn")),
-      ],
-      [Markup.button.text(ctx.i18n.t("Admin.checkClientsBtn"))],
+      [Markup.button.text(ctx.i18n.t("Admin.usersBtn"))],
       [Markup.button.text(ctx.i18n.t("backToMainMenuBtn"))],
     ])
       .oneTime()

@@ -8,7 +8,6 @@ exports.CreateProduct = async (
   name_ru,
   image,
   image_publicId,
-  dealerIds,
   caption_uz,
   caption_ru
 ) => {
@@ -21,7 +20,6 @@ exports.CreateProduct = async (
       caption_uz,
       caption_ru,
     });
-    await product.setDealers(dealerIds);
     return product.get({ plain: true });
   } catch (error) {
     console.log(error);
@@ -61,8 +59,7 @@ exports.UpdateProduct = async (
   image,
   image_publicId,
   caption_uz,
-  caption_ru,
-  dealerIds
+  caption_ru
 ) => {
   try {
     await Product.update(
@@ -74,10 +71,6 @@ exports.UpdateProduct = async (
 
     // Retrieve the updated product
     const updatedProduct = await Product.findByPk(id);
-
-    // Assuming you have a 'Dealers' association defined in your Product model
-    await updatedProduct.removeDealers();
-    await updatedProduct.setDealers(dealerIds);
     return updatedProduct;
   } catch (error) {
     console.log(error);

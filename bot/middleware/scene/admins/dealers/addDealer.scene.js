@@ -60,89 +60,6 @@ getRuDealerName.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
 getRuDealerName.on("message", async (ctx) => {
   try {
     ctx.wizard.state.dealerForm.name_ru = ctx.update.message.text;
-    ctx.wizard.state.dealerForm.region = {};
-    ctx.wizard.state.dealerForm.region.regionPage = 1;
-    ctx.wizard.state.dealerForm.region.itemsPerPage = 6;
-
-    const regions = await getRegionsWithPagination(
-      ctx.wizard.state.dealerForm.region.regionPage,
-      ctx.wizard.state.dealerForm.region.itemsPerPage
-    );
-
-    if (regions.totalItems === 0) {
-      await ctx.deleteMessage(ctx.update.message.message_id);
-      await ctx.reply(ctx.i18n.t("Client.emptyDataMsg"));
-      return ctx.scene.leave();
-    }
-
-    const keyboard = generateItemsKeyboard(
-      ctx.wizard.state.dealerForm.region.regionPage,
-      ctx.i18n.locale(),
-      regions.totalItems,
-      ctx.wizard.state.dealerForm.region.itemsPerPage,
-      regions.items,
-      ctx.i18n
-    );
-
-    await ctx.reply(ctx.i18n.t("AdminRegionForm.chooseRegionTxt"), keyboard);
-    return ctx.wizard.next();
-  } catch (e) {
-    console.log(e);
-  }
-});
-
-const connectRegionStep = new Composer();
-connectRegionStep.action(["prev", "next"], async (ctx) => {
-  try {
-    const match = ctx.update?.callback_query?.data;
-    switch (match) {
-      case "prev":
-        ctx.wizard.state.dealerForm.region.regionPage--;
-        break;
-      case "next":
-        ctx.wizard.state.dealerForm.region.regionPage++;
-        break;
-    }
-    const regions = await getRegionsWithPagination(
-      ctx.wizard.state.dealerForm.region.regionPage,
-      ctx.wizard.state.dealerForm.region.itemsPerPage
-    );
-    const keyboard = generateItemsKeyboard(
-      ctx.wizard.state.dealerForm.region.regionPage,
-      ctx.i18n.locale(),
-      regions.totalItems,
-      ctx.wizard.state.dealerForm.region.itemsPerPage,
-      regions.items,
-      ctx.i18n
-    );
-    await ctx.editMessageText(
-      ctx.i18n.t("AdminRegionForm.chooseRegionTxt"),
-      keyboard
-    );
-  } catch (error) {
-    console.log(error);
-  }
-});
-connectRegionStep.action("cancel", async (ctx) => {
-  try {
-    const MainMenu = await generateDealerAdminKeys(ctx);
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-    await ctx.reply(ctx.i18n.t("Client.successfullyCancelledMsg"), MainMenu);
-    return ctx.scene.leave();
-  } catch (error) {
-    console.log(error);
-  }
-});
-connectRegionStep.on("callback_query", async (ctx) => {
-  try {
-    if (!ctx.update.callback_query?.data.includes("i_")) {
-      return ctx.reply("invalid_callback_query");
-    }
-    const regionId = parseInt(
-      ctx.update.callback_query?.data.match(/i_(\d+)/)[1],
-      10
-    );
-    ctx.wizard.state.dealerForm.regionId = regionId;
     const confirmationMsg = {
       text: ctx.i18n.t("AdminDealerForm.confirmationMessage", {
         name_uz: ctx.wizard.state.dealerForm.name_uz,
@@ -155,11 +72,11 @@ connectRegionStep.on("callback_query", async (ctx) => {
         ],
       ]),
     };
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+
     await ctx.reply(confirmationMsg.text, confirmationMsg.buttons);
     return ctx.wizard.next();
-  } catch (error) {
-    console.log(error);
+  } catch (e) {
+    console.log(e);
   }
 });
 
@@ -180,8 +97,7 @@ confirmDetailStep.action(["yes", "no"], async (ctx) => {
     if (callBackData === "yes") {
       const dealer = await CreateDealer(
         ctx.wizard.state.dealerForm.name_uz,
-        ctx.wizard.state.dealerForm.name_ru,
-        ctx.wizard.state.dealerForm.regionId
+        ctx.wizard.state.dealerForm.name_ru
       );
       await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
       if (dealer) {
@@ -204,6 +120,5 @@ module.exports = new Scenes.WizardScene(
   startStep,
   getUzDealerName,
   getRuDealerName,
-  connectRegionStep,
   confirmDetailStep
 );

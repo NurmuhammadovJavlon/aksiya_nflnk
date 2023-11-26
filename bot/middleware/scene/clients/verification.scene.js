@@ -6,6 +6,7 @@ const {
 } = require("../../../common/sequelize/client.sequelize");
 const {
   GetAllAdminUsers,
+  getUser,
 } = require("../../../common/sequelize/user.sequelize");
 
 const startStep = new Composer();
@@ -33,15 +34,50 @@ startStep.on("location", async (ctx) => {
       return;
     }
     ctx.wizard.state.formData.location = res;
+    const msg = {
+      text: ctx.i18n.t("Client.confirmLocationMsg", {
+        location: ctx.wizard.state.formData.location,
+      }),
+      buttons: Markup.inlineKeyboard([
+        [
+          Markup.button.callback(ctx.i18n.t("Admin.yesBtn"), "yes"),
+          Markup.button.callback(ctx.i18n.t("Admin.noBtn"), "no"),
+        ],
+      ]),
+    };
+    await ctx.reply(msg.text, msg.buttons);
+    return ctx.wizard.next();
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+const confirmLocationStep = new Composer();
+confirmLocationStep.action("yes", async (ctx) => {
+  try {
     ctx.wizard.state.formData.keyboard = Markup.keyboard([
       [Markup.button.text(ctx.i18n.t("Client.backOneStepMsg"))],
       [Markup.button.text(ctx.i18n.t("backToMainMenuBtn"))],
     ]).resize();
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await ctx.reply(
       ctx.i18n.t("Client.sendInsideVideoMsg"),
       ctx.wizard.state.formData.keyboard
     );
     return ctx.wizard.next();
+  } catch (error) {
+    console.log(error);
+  }
+});
+confirmLocationStep.action("no", async (ctx) => {
+  try {
+    const locationKeyboard = Markup.keyboard([
+      [Markup.button.locationRequest(ctx.i18n.t("Client.sendLocationBtn"))],
+      [Markup.button.text(ctx.i18n.t("backToMainMenuBtn"))],
+    ]).resize();
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+    await ctx.reply(ctx.i18n.t("Client.editLocationMsg"), locationKeyboard);
+    return ctx.wizard.back();
   } catch (error) {
     console.log(error);
   }
@@ -55,7 +91,7 @@ insideVideoStep.hears(match("Client.backOneStepMsg"), async (ctx) => {
       [Markup.button.text(ctx.i18n.t("backToMainMenuBtn"))],
     ]).resize();
     await ctx.reply(ctx.i18n.t("Client.sendLocationMsg"), locationKeyboard);
-    return ctx.wizard.back();
+    return ctx.wizard.selectStep(0);
   } catch (error) {
     console.log(error);
   }
@@ -125,6 +161,7 @@ employeesNumberStep.on("message", async (ctx) => {
       await ctx.reply(ctx.i18n.t("Client.askForEmployeesNumberMsg"));
     }
     ctx.wizard.state.formData.numberOfEmployees = text;
+    const user = await getUser(String(ctx.chat.id));
     const client = await CreateClientBeforeValid(
       String(ctx.chat.id),
       ctx.wizard.state.formData.location,
@@ -133,6 +170,9 @@ employeesNumberStep.on("message", async (ctx) => {
 
     const msg = ctx.i18n.t("AdminClientForm.queryCaption", {
       id: client?.id,
+      firstname: user.firstName,
+      surname: user.lastName,
+      phoneNumber: user.phoneNumber,
       location: ctx.wizard.state.formData.location,
       numberOfEmployees: ctx.wizard.state.formData.numberOfEmployees,
     });
@@ -176,6 +216,7 @@ employeesNumberStep.on("message", async (ctx) => {
 module.exports = new Scenes.WizardScene(
   "ClientValidationWizard",
   startStep,
+  confirmLocationStep,
   insideVideoStep,
   outsideVideoStep,
   employeesNumberStep
