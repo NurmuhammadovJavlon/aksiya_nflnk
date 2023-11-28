@@ -185,6 +185,7 @@ Complain:
   complainIsSentMsg: "Спасибо, мы рассмотрим вашу жалобу в ближающее время"
   finalComplainMsg: "Жалоба от: ${firstName} ${lastName}\nНомер телефона: +${phoneNumber}\nСообщение: ${complainMsg}\n\nДата: ${date}"
   videoOrMsgIsRequired: "Вы должны отправить видео или сообщение как минимум"
+  confirmMsg: "Отправить следующую жалобу?\n\n${complainMsg}"
 Score:
   infoAboutScorebtn: "Инфо про систему накопления"
   purchaseHistoryBtn: "История покупок"

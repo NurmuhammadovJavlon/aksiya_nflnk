@@ -188,6 +188,7 @@ Complain:
   complainIsSentMsg: "Rahmat, shikoyatingizni tez orada ko‘rib chiqamiz"
   finalComplainMsg: "Shikoyat: ${firstName} ${lastName}\nTelefon raqami: +${phoneNumber}\nXabar: ${complainMsg}\n\nSana: ${date}"
   videoOrMsgIsRequired: "Hech bo'lmaganda video yoki xabar yuborishingiz kerak"
+  confirmMsg: "Quyidagi shikoyat yuborilsinmi?\n\n${complainMsg}"
 Score:
   infoAboutScorebtn: "Ball tizimi haqida"
   purchaseHistoryBtn: "Xaridlar tarixi"

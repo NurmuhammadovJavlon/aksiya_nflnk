@@ -9,7 +9,6 @@ const {
 module.exports = bot.hears(match("firstPromotionBtn"), async (ctx) => {
   ctx.session.prType = 1;
   const prInfo = await GetLatestEventInfo();
-  const prMsg = ctx.i18n.locale() === "uz" ? prInfo.text_uz : prInfo.text_ru;
 
   const promotionMenu = {
     text: ctx.i18n.t("firstPrInfo"),
@@ -25,13 +24,8 @@ module.exports = bot.hears(match("firstPromotionBtn"), async (ctx) => {
     return;
   }
 
-  await ctx.replyWithPhoto(prInfo.image, {
-    parse_mode: "HTML",
-    caption: prMsg,
-    reply_markup: {
-      keyboard: promotionMenu.buttons,
-      resize_keyboard: true,
-    },
-  });
+  const prMsg = ctx.i18n.locale() === "uz" ? prInfo.text_uz : prInfo.text_ru;
+
+  await ctx.replyWithHTML(prMsg, Markup.keyboard(promotionMenu.buttons));
   //   console.log(ctx.session);
 });

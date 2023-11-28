@@ -34,7 +34,7 @@ startStep.hears(match("AdminTextsForm.bestWorkInfoBtn"), async (ctx) => {
       ],
     ]);
     await ctx.reply(
-      ctx.i18n.t("AdminTextsForm.sendPhotoMsg"),
+      ctx.i18n.t("AdminTextsForm.sendEventTextUzMsg"),
       ctx.wizard.state.bestWork.keyboard
     );
     return ctx.wizard.next();
@@ -43,92 +43,20 @@ startStep.hears(match("AdminTextsForm.bestWorkInfoBtn"), async (ctx) => {
   }
 });
 
-const getEventPhotoStep = new Composer();
-getEventPhotoStep.action("cancel", async (ctx) => {
-  try {
-    await GoBack(ctx);
-    return ctx.scene.leave();
-  } catch (error) {
-    console.log(error);
-  }
-});
-getEventPhotoStep.action("skip", async (ctx) => {
-  try {
-    if (!ctx.wizard.state.bestWork.data?.image) {
-      await ctx.answerCbQuery(ctx.i18n.t("AdminTextsForm.sendPhotoMsg"));
-      return;
-    }
-    ctx.wizard.state.bestWork.photo = ctx.wizard.state.bestWork.data?.image;
-    ctx.wizard.state.bestWork.keyboard = Markup.inlineKeyboard([
-      [Markup.button.callback(ctx.i18n.t("Client.backOneStepMsg"), "back")],
-      [Markup.button.callback(ctx.i18n.t("skipBtn"), "skip")],
-      [
-        Markup.button.callback(
-          ctx.i18n.t("Client.cancelApplicationBtn"),
-          `cancel`
-        ),
-      ],
-    ]);
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-    await ctx.reply(
-      ctx.i18n.t("AdminTextsForm.sendEventTextUzMsg"),
-      ctx.wizard.state.bestWork.keyboard
-    );
-    return ctx.wizard.next();
-  } catch (error) {
-    console.log(error);
-  }
-});
-getEventPhotoStep.on("photo", async (ctx) => {
-  try {
-    const fileId = ctx.message.photo[ctx.message.photo.length - 1]?.file_id;
-    const { href } = await ctx.telegram.getFileLink(fileId);
-    const res = await uploadPhotoToCloudinary(href);
-    ctx.wizard.state.bestWork.photo = res?.secure_url;
-    ctx.wizard.state.bestWork.keyboard = Markup.inlineKeyboard([
-      [Markup.button.callback(ctx.i18n.t("Client.backOneStepMsg"), "back")],
-      [Markup.button.callback(ctx.i18n.t("skipBtn"), "skip")],
-      [
-        Markup.button.callback(
-          ctx.i18n.t("Client.cancelApplicationBtn"),
-          `cancel`
-        ),
-      ],
-    ]);
-    await ctx.reply(
-      ctx.i18n.t("AdminTextsForm.sendEventTextUzMsg"),
-      ctx.wizard.state.bestWork.keyboard
-    );
-    return ctx.wizard.next();
-  } catch (error) {
-    console.log(error);
-  }
-});
-
 const getEventUzText = new Composer();
-getEventUzText.action("back", async (ctx) => {
-  try {
-    ctx.wizard.state.bestWork.keyboard = Markup.inlineKeyboard([
-      [
-        Markup.button.callback(
-          ctx.i18n.t("Client.cancelApplicationBtn"),
-          `cancel`
-        ),
-      ],
-    ]);
-    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-    await ctx.reply(
-      ctx.i18n.t("AdminTextsForm.sendPhotoMsg"),
-      ctx.wizard.state.bestWork.keyboard
-    );
-    return ctx.wizard.back();
-  } catch (error) {
-    console.log(error);
-  }
-});
 getEventUzText.action("skip", async (ctx) => {
   try {
     ctx.wizard.state.bestWork.text_uz = ctx.wizard.state.bestWork.data?.text_uz;
+    ctx.wizard.state.bestWork.keyboard = Markup.inlineKeyboard([
+      [Markup.button.callback(ctx.i18n.t("Client.backOneStepMsg"), "back")],
+      [Markup.button.callback(ctx.i18n.t("skipBtn"), "skip")],
+      [
+        Markup.button.callback(
+          ctx.i18n.t("Client.cancelApplicationBtn"),
+          `cancel`
+        ),
+      ],
+    ]);
     await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await ctx.reply(
       ctx.i18n.t("AdminTextsForm.sendEventTextRuMsg"),
@@ -141,6 +69,7 @@ getEventUzText.action("skip", async (ctx) => {
 });
 getEventUzText.action("cancel", async (ctx) => {
   try {
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await GoBack(ctx);
     return ctx.scene.leave();
   } catch (error) {
@@ -150,6 +79,16 @@ getEventUzText.action("cancel", async (ctx) => {
 getEventUzText.on("message", async (ctx) => {
   try {
     ctx.wizard.state.bestWork.text_uz = ctx.message.text;
+    ctx.wizard.state.bestWork.keyboard = Markup.inlineKeyboard([
+      [Markup.button.callback(ctx.i18n.t("Client.backOneStepMsg"), "back")],
+      [Markup.button.callback(ctx.i18n.t("skipBtn"), "skip")],
+      [
+        Markup.button.callback(
+          ctx.i18n.t("Client.cancelApplicationBtn"),
+          `cancel`
+        ),
+      ],
+    ]);
     await ctx.reply(
       ctx.i18n.t("AdminTextsForm.sendEventTextRuMsg"),
       ctx.wizard.state.bestWork.keyboard
@@ -189,13 +128,10 @@ getEventRuText.action("skip", async (ctx) => {
       ],
     };
     await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
-    await ctx.replyWithPhoto(ctx.wizard.state.bestWork.photo, {
-      caption: confirmationMsg.text,
-      reply_markup: {
-        inline_keyboard: confirmationMsg.buttons,
-      },
-      parse_mode: "HTML",
-    });
+    await ctx.replyWithHTML(
+      confirmationMsg.text,
+      Markup.inlineKeyboard(confirmationMsg.buttons).resize()
+    );
     return ctx.wizard.next();
   } catch (error) {
     console.log(error);
@@ -225,13 +161,10 @@ getEventRuText.on("message", async (ctx) => {
       ],
     };
 
-    await ctx.replyWithPhoto(ctx.wizard.state.bestWork.photo, {
-      caption: confirmationMsg.text,
-      reply_markup: {
-        inline_keyboard: confirmationMsg.buttons,
-      },
-      parse_mode: "HTML",
-    });
+    await ctx.replyWithHTML(
+      confirmationMsg.text,
+      Markup.inlineKeyboard(confirmationMsg.buttons).resize()
+    );
     return ctx.wizard.next();
   } catch (error) {
     console.log(error);
@@ -241,6 +174,7 @@ getEventRuText.on("message", async (ctx) => {
 const confirmDetailStep = new Composer();
 confirmDetailStep.hears(match("Client.cancelApplicationBtn"), async (ctx) => {
   try {
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await GoBack(ctx);
     return ctx.scene.leave();
   } catch (error) {
@@ -254,8 +188,7 @@ confirmDetailStep.action("yes", async (ctx) => {
     if (ctx.wizard.state.bestWork.method === "CREATE") {
       const eventInfo = await CreateBestWorkText(
         ctx.wizard.state.bestWork.text_uz,
-        ctx.wizard.state.bestWork.text_ru,
-        ctx.wizard.state.bestWork.photo
+        ctx.wizard.state.bestWork.text_ru
       );
       await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
       if (eventInfo) {
@@ -268,7 +201,6 @@ confirmDetailStep.action("yes", async (ctx) => {
       const bestWorkInfo = await UpdateBestWorkInfo(
         ctx.wizard.state.bestWork.text_uz,
         ctx.wizard.state.bestWork.text_ru,
-        ctx.wizard.state.bestWork.photo,
         bestWorkInfoId
       );
       await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
@@ -296,7 +228,6 @@ confirmDetailStep.action("no", async (ctx) => {
 module.exports = new Scenes.WizardScene(
   "BestWorkInfoWizard",
   startStep,
-  getEventPhotoStep,
   getEventUzText,
   getEventRuText,
   confirmDetailStep

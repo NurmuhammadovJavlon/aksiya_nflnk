@@ -14,7 +14,6 @@ module.exports = bot.hears(match("secondPromotionBtn"), async (ctx) => {
   const user = await getUser(String(ctx.chat.id));
   const works = await CheckUserWorks(user?.id);
   const prInfo = await GetLatestBestWorkInfo();
-  const prMsg = ctx.i18n.locale() === "uz" ? prInfo.text_uz : prInfo.text_ru;
   const promotionMenu = {
     text: ctx.i18n.t("firstPrInfo"),
     buttons: [
@@ -24,6 +23,12 @@ module.exports = bot.hears(match("secondPromotionBtn"), async (ctx) => {
     ],
   };
 
+  if (!prInfo) {
+    await ctx.reply(ctx.i18n.t("firstPrInfo"));
+    return;
+  }
+  const prMsg = ctx.i18n.locale() === "uz" ? prInfo.text_uz : prInfo.text_ru;
+
   if (works.totalItems < 3) {
     if (!prInfo) {
       await ctx.reply(
@@ -31,27 +36,10 @@ module.exports = bot.hears(match("secondPromotionBtn"), async (ctx) => {
         Markup.keyboard(promotionMenu.buttons).resize()
       );
     }
-    await ctx.replyWithPhoto(prInfo.image, {
-      parse_mode: "HTML",
-      caption: prMsg,
-      reply_markup: {
-        keyboard: promotionMenu.buttons,
-        resize_keyboard: true,
-      },
-    });
+    await ctx.replyWithHTML(prMsg, Markup.keyboard(promotionMenu.buttons));
     return ctx.scene.enter("BestWorkPromotionWizard");
   }
 
-  if (!prInfo) {
-    await ctx.reply(ctx.i18n.t("firstPrInfo"));
-  }
-  await ctx.replyWithPhoto(prInfo.image, {
-    parse_mode: "HTML",
-    caption: prMsg,
-    reply_markup: {
-      keyboard: promotionMenu.buttons,
-      resize_keyboard: true,
-    },
-  });
+  await ctx.replyWithHTML(prMsg, Markup.keyboard(promotionMenu.buttons));
   return;
 });

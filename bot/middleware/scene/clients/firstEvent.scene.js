@@ -60,15 +60,113 @@ const getOrderDetails = async (ctx) => {
 const checkUserScore = async (userId) => {
   try {
     const userScore = await GetUserScore(userId);
-    if (userScore <= 0.9) return false;
-    else return true;
+    if (userScore <= 0.9) return true;
+    else return false;
   } catch (error) {
     console.log(error);
   }
 };
 
+// const informAllOperators = async (
+//   ctx,
+//   operators,
+//   processedOperators,
+//   operatorNotification
+// ) => {
+//   try {
+//     for (const operator of operators) {
+//       if (!processedOperators.has(operator.chatId)) {
+//         (async () => {
+//           console.log("still here");
+//           await ctx.telegram.sendMessage(
+//             parseInt(operator.chatId),
+//             operatorNotification.text,
+//             operatorNotification.buttons
+//           );
+//           processedOperators.add(operator.chatId);
+//           // console.log(`Message sent to ${operator.name}`);
+//         })();
+
+//         // Introduce a delay (e.g., 5 seconds) before sending to the next operator
+//         await new Promise((resolve) => setTimeout(resolve, 5000));
+//       }
+//     }
+//   } catch (error) {
+//     console.log(error);
+//   }
+// };
+
+const informAllOperators = async (
+  ctx,
+  operators,
+  processedOperators,
+  operatorNotification
+) => {
+  const operatorsIterator = operators[Symbol.iterator]();
+
+  const sendOperatorMessage = async () => {
+    const operator = operatorsIterator.next().value;
+
+    if (operator && !processedOperators.has(operator.chatId)) {
+      try {
+        await ctx.telegram.sendMessage(
+          parseInt(operator.chatId),
+          operatorNotification.text,
+          operatorNotification.buttons
+        );
+        processedOperators.add(operator.chatId);
+      } catch (error) {
+        console.error(`Error sending message to operator: ${error.message}`);
+      }
+    } else {
+      clearInterval(intervalId);
+      console.log("All messages sent successfully.");
+    }
+  };
+
+  const intervalId = setInterval(sendOperatorMessage, 5000);
+  await sendOperatorMessage(); // Start the first iteration immediately
+};
+
+const informAllAdmins = async (
+  ctx,
+  admins,
+  processedAdmins,
+  operatorNotification
+) => {
+  const adminsIterator = admins[Symbol.iterator]();
+
+  const sendAdminMessage = async () => {
+    const admin = adminsIterator.next().value;
+
+    if (admin && !processedAdmins.has(admin.chatID)) {
+      try {
+        await ctx.telegram.sendMessage(
+          parseInt(admin.chatID),
+          "No operator found to send this order details to confirm"
+        );
+        await ctx.telegram.sendMessage(
+          parseInt(admin.chatID),
+          operatorNotification.text,
+          operatorNotification.buttons
+        );
+        processedAdmins.add(admin.chatID);
+      } catch (error) {
+        console.error(`Error sending message to admin: ${error.message}`);
+      }
+    } else {
+      clearInterval(intervalId);
+      console.log("All messages sent successfully.");
+    }
+  };
+
+  const intervalId = setInterval(sendAdminMessage, 5000);
+  await sendAdminMessage(); // Start the first iteration immediately
+};
+
 const getRegion = new Composer();
 getRegion.action("cancel", async (ctx) => {
+  await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
   await GoBack(ctx);
 });
 getRegion.on("message", async (ctx) => {
@@ -125,7 +223,8 @@ getRegion.action(/i_(\d+)/, async (ctx) => {
     ctx.wizard.state.formData.dealer.dealerPage = 1;
     ctx.wizard.state.formData.dealer.itemsPerPage = 30;
 
-    const dealers = await GetDealersWithPagination(
+    const dealers = await GetDealersByRegionId(
+      ctx.wizard.state.formData.region.regionId,
       ctx.wizard.state.formData.dealer.dealerPage,
       ctx.wizard.state.formData.dealer.itemsPerPage
     );
@@ -154,6 +253,7 @@ getRegion.action(/i_(\d+)/, async (ctx) => {
 
 const getDealer = new Composer();
 getDealer.action("cancel", async (ctx) => {
+  await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
   await GoBack(ctx);
 });
 getDealer.action("back", async (ctx) => {
@@ -255,12 +355,14 @@ getDealer.action(/i_(\d+)/, async (ctx) => {
 
 const getProduct = new Composer();
 getProduct.action("cancel", async (ctx) => {
+  await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
   await GoBack(ctx);
 });
 getProduct.action("back", async (ctx) => {
   try {
     ctx.wizard.state.formData.dealer.dealerPage = 1;
-    const dealers = await GetDealersWithPagination(
+    const dealers = await GetDealersByRegionId(
+      ctx.wizard.state.formData.region.regionId,
       ctx.wizard.state.formData.dealer.dealerPage,
       ctx.wizard.state.formData.dealer.itemsPerPage
     );
@@ -351,13 +453,14 @@ getProduct.action(/i_(\d+)/, async (ctx) => {
 
 const getAmount = new Composer();
 getAmount.action("cancel", async (ctx) => {
+  await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
   await GoBack(ctx);
 });
 getAmount.action("back", async (ctx) => {
   try {
     ctx.wizard.state.formData.product.productPage = 1;
-    const products = await GetProductsByDealerId(
-      ctx.wizard.state.formData.dealer.dealerId,
+
+    const products = await GetProducts(
       ctx.wizard.state.formData.product.productPage,
       ctx.wizard.state.formData.product.itemsPerPage
     );
@@ -370,6 +473,7 @@ getAmount.action("back", async (ctx) => {
       products.items,
       ctx.i18n
     );
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id - 1);
     await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await ctx.reply(ctx.i18n.t("Client.chooseProductTxt"), keyboard);
     return ctx.wizard.back();
@@ -449,10 +553,10 @@ confirmPurchaseStep.action("yes", async (ctx) => {
   try {
     const scoreIsOk = await checkUserScore(String(ctx.chat.id));
 
-    // if (!scoreIsOk) {
-    //   await ctx.reply(ctx.i18n.t("Client.confirmAsClientMsg"));
-    //   return ctx.scene.leave();
-    // }
+    if (!scoreIsOk) {
+      await ctx.reply(ctx.i18n.t("Client.confirmAsClientMsg"));
+      return ctx.scene.leave();
+    }
 
     const finalMsg = {
       text: ctx.i18n.t("Client.waitForOperatorsMsg"),
@@ -467,8 +571,12 @@ confirmPurchaseStep.action("yes", async (ctx) => {
       ctx.wizard.state.formData.dealer.dealerId
     );
 
-    const user = await getUser(String(ctx.chat.id));
-    const product = await GetProductById(ctx.wizard.state.formData.productId);
+    const [user, product, operators, admins] = await Promise.all([
+      getUser(String(ctx.chat.id)),
+      GetProductById(ctx.wizard.state.formData.productId),
+      GetOperatorsByDealerId(ctx.wizard.state.formData.dealer.dealerId),
+      GetAllAdminUsers(),
+    ]);
     const productName =
       ctx.i18n.locale() === "uz" ? product?.name_uz : product?.name_ru;
     const dateFormatOptions = {
@@ -504,60 +612,19 @@ confirmPurchaseStep.action("yes", async (ctx) => {
         .resize(),
     };
 
-    // Send it to Operators
-    const operators = await GetOperatorsByDealerId(
-      ctx.wizard.state.formData.dealer.dealerId
-    );
-    console.log(operators);
-    if (operators.length === 0) {
-      const admins = await GetAllAdminUsers();
+    if (operators.totalItems === 0) {
       const processedAdmins = new Set();
-
-      for (const admin of admins) {
-        if (!processedAdmins.has(admin.chatID)) {
-          try {
-            await ctx.telegram.sendMessage(
-              parseInt(admin.chatID),
-              "No operator found to send this order details to confirm"
-            );
-            await ctx.telegram.sendMessage(
-              parseInt(admin.chatID),
-              operatorNotification.text,
-              operatorNotification.buttons
-            );
-            processedAdmins.add(admin.chatID);
-            // console.log(`Message sent to ${operator.name}`);
-          } catch (error) {
-            console.error(`Error sending message to admin: ${error.message}`);
-          }
-        }
-
-        // Introduce a delay (e.g., 3 seconds) before sending to the next admin
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-      }
+      await informAllAdmins(ctx, admins, processedAdmins, operatorNotification);
+      return ctx.scene.leave();
     }
 
     const processedOperators = new Set();
-    operators.forEach(async (operator) => {
-      if (!processedOperators.has(operator.chatId)) {
-        try {
-          await ctx.telegram.sendMessage(
-            operator.chatId,
-            operatorNotification.text,
-            operatorNotification.buttons
-          );
-          processedOperators.add(operator.chatId);
-          // console.log(`Message sent to ${operator.name}`);
-        } catch (error) {
-          console.error(
-            `Error sending message to operator.name: ${error.message}`
-          );
-        }
-      }
-
-      // Introduce a delay (e.g., 3 seconds) before sending to the next admin
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-    });
+    await informAllOperators(
+      ctx,
+      operators,
+      processedOperators,
+      operatorNotification
+    );
     return ctx.scene.leave();
   } catch (error) {
     console.log(error);
@@ -566,6 +633,7 @@ confirmPurchaseStep.action("yes", async (ctx) => {
 confirmPurchaseStep.action("no", async (ctx) => {
   try {
     const MainMenu = generatePromotionButtons(ctx);
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await ctx.reply(ctx.i18n.t("Client.applicationCanceledMsg"), MainMenu);
     return ctx.scene.leave();
   } catch (error) {

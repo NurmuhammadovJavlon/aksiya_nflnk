@@ -21,7 +21,12 @@ const sendComplainMsgToAdmins = async (ctx, complainMsg) => {
       ctx.i18n.locale(),
       dateFormatOptions
     ).format(new Date());
-    const user = await getUser(String(ctx.chat.id));
+
+    const [user, admins] = await Promise.all([
+      getUser(String(ctx.chat.id)),
+      GetAllAdminUsers(),
+    ]);
+
     const complainCaption = ctx.i18n.t("Complain.finalComplainMsg", {
       firstName: user.firstName,
       lastName: user.lastName,
@@ -31,9 +36,12 @@ const sendComplainMsgToAdmins = async (ctx, complainMsg) => {
     });
 
     const processedAdmins = new Set();
-    const admins = await GetAllAdminUsers();
-    for (const admin of admins) {
-      if (!processedAdmins.has(admin.chatID)) {
+    const adminsIterator = admins[Symbol.iterator]();
+
+    const sendAdminMessage = async () => {
+      const admin = adminsIterator.next().value;
+
+      if (admin && !processedAdmins.has(admin.chatID)) {
         try {
           if (ctx.wizard.state.complain.videoId) {
             await ctx.telegram.sendMediaGroup(parseInt(admin.chatID), [
@@ -50,15 +58,17 @@ const sendComplainMsgToAdmins = async (ctx, complainMsg) => {
             );
           }
           processedAdmins.add(admin.chatID);
-          // console.log(`Message sent to ${operator.name}`);
         } catch (error) {
           console.error(`Error sending message to admin: ${error.message}`);
         }
+      } else {
+        clearInterval(intervalId);
+        console.log("All messages sent successfully.");
       }
+    };
 
-      // Introduce a delay (e.g., 3 seconds) before sending to the next admin
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-    }
+    const intervalId = setInterval(sendAdminMessage, 5000);
+    await sendAdminMessage(); // Start the first iteration immediately
   } catch (error) {
     console.log(error);
   }
@@ -103,7 +113,6 @@ getVideoStep.action("skip", async (ctx) => {
           ctx.i18n.t("Client.cancelApplicationBtn"),
           `cancel`
         ),
-        Markup.button.callback(ctx.i18n.t("skipBtn"), `skip`),
       ],
       [Markup.button.callback(ctx.i18n.t("Client.backOneStepMsg"), `back`)],
     ]);
@@ -134,7 +143,6 @@ getVideoStep.on("video", async (ctx) => {
           ctx.i18n.t("Client.cancelApplicationBtn"),
           `cancel`
         ),
-        Markup.button.callback(ctx.i18n.t("skipBtn"), `skip`),
       ],
       [Markup.button.callback(ctx.i18n.t("Client.backOneStepMsg"), `back`)],
     ]);
@@ -202,9 +210,80 @@ getComplainMsgStep.action("skip", async (ctx) => {
 });
 getComplainMsgStep.on("message", async (ctx) => {
   try {
-    ctx.wizard.state.complain.complainMsg = ctx.update.message.text;
+    ctx.wizard.state.complain.complainMsg = ctx.message.text;
+    const confirmMsg = {
+      text: ctx.i18n.t("Complain.confirmMsg", {
+        complainMsg: ctx.wizard.state.complain.complainMsg,
+      }),
+      buttons: [
+        [
+          Markup.button.callback(ctx.i18n.t("Admin.yesBtn"), "yes"),
+          Markup.button.callback(ctx.i18n.t("Admin.noBtn"), "no"),
+        ],
+        [Markup.button.callback(ctx.i18n.t("Client.backOneStepMsg"), `back`)],
+      ],
+    };
+
+    if (ctx.wizard.state.complain.videoId) {
+      await ctx.replyWithVideo(ctx.wizard.state.complain.videoId, {
+        caption: confirmMsg.text,
+        reply_markup: {
+          inline_keyboard: confirmMsg.buttons,
+        },
+      });
+      return ctx.wizard.next();
+    }
+
+    await ctx.reply(confirmMsg.text, Markup.inlineKeyboard(confirmMsg.buttons));
+    return ctx.wizard.next();
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+const confirmComplainStep = new Composer();
+confirmComplainStep.action("back", async (ctx) => {
+  try {
+    ctx.wizard.state.complain.videoId = null;
+    const keyboard = Markup.inlineKeyboard([
+      [
+        Markup.button.callback(
+          ctx.i18n.t("Client.cancelApplicationBtn"),
+          `cancel`
+        ),
+        Markup.button.callback(ctx.i18n.t("skipBtn"), `skip`),
+      ],
+      [Markup.button.callback(ctx.i18n.t("Client.backOneStepMsg"), `back`)],
+    ]);
+    await ctx.reply(ctx.i18n.t("Complain.writeComplainMsg"), keyboard);
+    return ctx.wizard.back();
+  } catch (error) {
+    console.log(error);
+  }
+});
+confirmComplainStep.action("cancel", async (ctx) => {
+  try {
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+    await ctx.reply(ctx.i18n.t("Client.successfullyCancelledMsg"));
+    return ctx.scene.leave();
+  } catch (error) {
+    console.log(error);
+  }
+});
+confirmComplainStep.action("yes", async (ctx) => {
+  try {
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
     await ctx.reply(ctx.i18n.t("Complain.complainIsSentMsg"));
     await sendComplainMsgToAdmins(ctx, ctx.wizard.state.complain.complainMsg);
+    return ctx.scene.leave();
+  } catch (error) {
+    console.log(error);
+  }
+});
+confirmComplainStep.action("no", async (ctx) => {
+  try {
+    await ctx.deleteMessage(ctx.update.callback_query.message.message_id);
+    await ctx.reply(ctx.i18n.t("Client.successfullyCancelledMsg"));
     return ctx.scene.leave();
   } catch (error) {
     console.log(error);
@@ -215,5 +294,6 @@ module.exports = new Scenes.WizardScene(
   "ComplainWizard",
   startStep,
   getVideoStep,
-  getComplainMsgStep
+  getComplainMsgStep,
+  confirmComplainStep
 );

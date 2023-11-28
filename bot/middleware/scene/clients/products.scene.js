@@ -63,7 +63,7 @@ sendProducts.hears(match("productsBtn"), async (ctx) => {
     );
 
     if (products.totalItems === 0) {
-      await ctx.answerCbQuery(ctx.i18n.t("Client.emptyDataMsg"));
+      await ctx.reply(ctx.i18n.t("Client.emptyDataMsg"));
       return;
     }
 
